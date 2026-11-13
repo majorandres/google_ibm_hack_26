@@ -31,6 +31,92 @@ Not built yet (see the plan's P1 and P2): ride history screen and PDF export, ma
 
 IBM is the intelligence layer and Google is the app and data layer. Routing a complaint to an office and counting the deadline are plain code, not AI (`backend/app/complaints.py`, `backend/app/seed.py`).
 
+## System design
+
+One container on Google Cloud Run serves both the React app and the FastAPI API. Every AI call goes from that container to IBM Cloud. Every piece of stored data lives in Google Cloud. The whole Google side is defined in Terraform (`infra/main.tf`). The IBM services are provisioned by the hackathon and reached with an API key.
+
+```mermaid
+flowchart LR
+  rider["Rider's phone or browser<br/>React app, installable"]
+
+  subgraph gcp["Google Cloud · mich-riderecord · us-central1"]
+    run["Cloud Run service: riderecord<br/>one container: FastAPI /api + React app<br/>1 to 2 instances"]
+    fs[("Firestore<br/>logged trips")]
+    bq[("BigQuery<br/>riderecord.trips<br/>3,000 synthetic trips")]
+    sm["Secret Manager<br/>IBM Cloud API key"]
+    ar["Artifact Registry<br/>container images"]
+  end
+
+  subgraph ibm["IBM Cloud"]
+    stt["Watson Speech to Text<br/>voice to transcript"]
+    wx["watsonx.ai · Granite<br/>ibm/granite-4-h-small<br/>incident extraction, complaint drafts"]
+  end
+
+  gh["GitHub Actions<br/>CI on every PR<br/>deploy on push to main"]
+
+  rider -- "HTTPS" --> run
+  run -- "audio" --> stt
+  run -- "prompts" --> wx
+  run -- "save and read trips" --> fs
+  run -- "dashboard query" --> bq
+  sm -. "key injected at startup" .-> run
+  gh -- "build and push image" --> ar
+  ar -. "new revision" .-> run
+```
+
+### A voice log, step by step
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor D as Denise (rider)
+  participant App as React app
+  participant API as FastAPI on Cloud Run
+  participant STT as IBM Watson Speech to Text
+  participant G as IBM Granite on watsonx.ai
+  participant FS as Google Firestore
+  D->>App: Taps Talk and says what happened
+  App->>API: POST /api/voice (audio)
+  API->>STT: audio
+  STT-->>API: transcript
+  API->>G: extraction prompt (temperature 0, JSON only)
+  G-->>API: incident as JSON
+  API->>API: validate with Pydantic, drop any provider she never named
+  API-->>App: transcript and incident, or a manual form if the answer is invalid
+  D->>App: Checks the fields and saves
+  App->>API: POST /api/trips
+  API->>FS: write the trip
+```
+
+The other two flows use the same pieces:
+
+- **Complaint** (`POST /api/complaints`). The backend reads the rider's chosen trips from Firestore and picks the office to file with from `seed_data.json`. It counts the days left to file in Michigan time. Then Granite drafts the letter from those logged facts only. The draft goes back to the rider and is never stored or sent.
+- **Dashboard** (`GET /api/stats`). A BigQuery query groups late, missed and denied trips by provider, month and direction. A provider-month is flagged as a "possible pattern" when at least 10% of at least 30 trips went wrong (late means more than 30 minutes).
+
+### Deployment
+
+```mermaid
+flowchart LR
+  pr["Pull request"] --> ci["CI<br/>ruff + pytest · oxlint + build<br/>terraform validate · Docker smoke test"]
+  push["Push to main"] --> ci2["Same CI"] --> img["Docker build<br/>React build + Python app"] --> ar["Artifact Registry"] --> roll["Cloud Run rollout"] --> smoke["Smoke test<br/>GET /api/health"]
+```
+
+`scripts/deploy.sh` runs once to create everything with Terraform: the APIs, Artifact Registry, Firestore, the BigQuery dataset, Secret Manager, the service account and the Cloud Run service. After that, each merge to `main` only ships a new image. Docs-only pushes don't deploy.
+
+### Design decisions
+
+| Decision | Why |
+|---|---|
+| One container for the API and the web app | One URL and one thing to deploy. No cross-origin setup. |
+| IBM API key in Secret Manager, read by the Cloud Run service account | The key never sits in the repo or the image. (The Speech to Text key is still a plain environment variable. This is a known shortcut, marked in `infra/main.tf`.) |
+| Service account with only the roles it needs | Firestore read/write, BigQuery read and query, read the one secret. Nothing else. |
+| Granite at temperature 0, JSON only, checked with Pydantic | The same words give the same answer. A bad answer opens the manual form instead of saving a guess. |
+| Granite's answers cached per sentence and day | A rehearsed demo sentence comes back instantly, so the live demo doesn't wait on watsonx. |
+| 20 AI calls per minute per caller | The public URL can't burn through the IBM credits. |
+| Routing and deadlines in plain code | They must be exact, so AI doesn't generate them. |
+| Every cloud service is optional | With no keys the app still runs: trips in memory, the dashboard from a CSV, complaints from a template. `/api/health` shows which services are on. |
+| Kept warm at 1 instance, capped at 2 | No cold start during the demo, and costs stay bounded. |
+
 ## Layout
 
 | Path | What |
@@ -115,9 +201,9 @@ Deployed on November 13, 2026.
 
 Check it with `curl https://riderecord-gghnd43xpq-uc.a.run.app/api/health`. It reports whether watsonx and Speech to Text are configured and where trips and stats come from.
 
-**Verified on the live app:** health, the web app, `/api/stats` from BigQuery, trips in Firestore, `/api/extract` through Granite, and a GitHub Actions deploy from `main`.
+**Verified on the live app:** health, the web app, `/api/stats` from BigQuery, trips in Firestore, `/api/extract` through Granite, voice logging (`docs/demo-sentence.wav` through Speech to Text and Granite), and a GitHub Actions deploy from `main`.
 
-**Not verified yet:** `/api/complaints` on the live app, and voice logging (`STT_URL` is not set, so Speech to Text is off).
+**Not verified yet:** `/api/complaints` on the live app.
 
 ### Problems we hit on the first deploy
 
@@ -145,4 +231,4 @@ Rules we hold to:
 
 - **IBM Granite** (`ibm/granite-4-h-small`) on watsonx.ai and **IBM Watson Speech to Text** are the models the product calls.
 - **Claude (Anthropic)** was used for research, docs and writing the code in this repo.
-- **IBM Bob** reviewed the team's earlier idea.
+- **IBM Bob** was used to develop tests and review code, and to review the team's earlier idea.
