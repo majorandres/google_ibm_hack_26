@@ -28,10 +28,10 @@ def _model() -> ModelInference:
     )
 
 
-def chat(prompt: str, system: str | None = None) -> str:
-    messages = []
-    if system:
-        messages.append({"role": "system", "content": system})
-    messages.append({"role": "user", "content": prompt})
-    response = _model().chat(messages=messages)
+def chat(prompt: str) -> str:
+    # temperature 0: extraction and complaint drafts must not vary or embellish.
+    response = _model().chat(
+        messages=[{"role": "user", "content": prompt}],
+        params={"temperature": 0, "max_tokens": 600},
+    )
     return response["choices"][0]["message"]["content"]

@@ -86,12 +86,12 @@ jobs:
           context: .
           platforms: linux/amd64
           load: true
-          tags: commute-check:ci
+          tags: riderecord:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Run the container and check it serves the API and the frontend
         run: |
-          docker run -d --name app -p 8080:8080 commute-check:ci
+          docker run -d --name app -p 8080:8080 riderecord:ci
           for _ in $(seq 1 30); do
             curl -fsS http://localhost:8080/api/health && break
             sleep 1

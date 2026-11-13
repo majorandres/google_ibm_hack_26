@@ -1,37 +1,63 @@
 import { useEffect, useState } from 'react'
+import { api, type Provider } from './api'
+import Complaints from './Complaints'
+import Dashboard from './Dashboard'
+import TripForm from './TripForm'
+import { Status } from './ui'
+import VoiceLog from './VoiceLog'
 
-type Health = { status: string; watsonx_configured: boolean; model: string }
+const SCREENS = [
+  { id: 'log', label: 'Log a ride' },
+  { id: 'talk', label: 'Talk' },
+  { id: 'complain', label: 'Complaints' },
+  { id: 'data', label: 'Dashboard' },
+] as const
+type ScreenId = (typeof SCREENS)[number]['id']
 
 export default function App() {
-  const [health, setHealth] = useState<Health | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [screen, setScreen] = useState<ScreenId>('log')
+  const [providers, setProviders] = useState<Provider[]>([])
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    fetch('/api/health')
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-      .then(setHealth)
-      .catch((e: Error) => setError(e.message))
+    api.providers().then(setProviders).catch((e: Error) => setError(e.message))
   }, [])
 
+  const title = SCREENS.find((s) => s.id === screen)!.label
   return (
-    <main className="mx-auto max-w-xl p-8 font-sans">
-      <h1 className="text-3xl font-semibold">Commute Check</h1>
-      <p className="mt-2 text-slate-600">
-        Can you make the round trip to this job by bus, at the hours the shift demands?
-      </p>
-      <section className="mt-6 rounded-lg border border-slate-200 p-4 text-sm">
-        <h2 className="font-medium">Backend</h2>
-        {error && <p className="text-red-600">Not reachable: {error}</p>}
-        {!error && !health && <p>Checking…</p>}
-        {health && (
-          <ul className="mt-1 space-y-1">
-            <li>API: {health.status}</li>
-            <li>
-              Granite ({health.model}): {health.watsonx_configured ? 'configured' : 'not configured'}
+    <div className="mx-auto max-w-2xl bg-white p-4 font-sans text-slate-950">
+      <header>
+        <p className="text-3xl font-bold text-blue-900">RideRecord</p>
+        <p className="text-lg">Your own record of every paratransit and Medicaid ride. Demo account: Denise.</p>
+      </header>
+
+      <nav aria-label="Main" className="my-4">
+        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {SCREENS.map((s) => (
+            <li key={s.id}>
+              <button
+                type="button"
+                onClick={() => setScreen(s.id)}
+                aria-current={screen === s.id ? 'page' : undefined}
+                className="min-h-11 w-full rounded-lg border-2 border-blue-800 px-2 py-2 text-lg font-semibold text-blue-900
+                  focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-amber-500
+                  aria-[current=page]:bg-blue-800 aria-[current=page]:text-white"
+              >
+                {s.label}
+              </button>
             </li>
-          </ul>
-        )}
-      </section>
-    </main>
+          ))}
+        </ul>
+      </nav>
+
+      <main>
+        <h1 className="mb-4 text-3xl font-semibold">{title}</h1>
+        {error && <Status error>Could not reach RideRecord: {error}</Status>}
+        {screen === 'log' && <TripForm providers={providers} />}
+        {screen === 'talk' && <VoiceLog providers={providers} />}
+        {screen === 'complain' && <Complaints providers={providers} />}
+        {screen === 'data' && <Dashboard />}
+      </main>
+    </div>
   )
 }

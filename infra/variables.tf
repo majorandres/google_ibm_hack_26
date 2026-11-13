@@ -1,35 +1,22 @@
-variable "ibmcloud_api_key" {
-  description = "IBM Cloud API key. Pass via TF_VAR_ibmcloud_api_key; never commit it."
+variable "project_id" {
+  description = "Google Cloud project to deploy into."
   type        = string
-  sensitive   = true
 }
 
 variable "region" {
   type    = string
-  default = "us-south"
+  default = "us-central1"
 }
 
-variable "registry" {
-  description = "IBM Container Registry host for the region."
+variable "firestore_location" {
+  description = "Firestore location. Cannot be changed after the database is created."
   type        = string
-  default     = "us.icr.io"
-}
-
-variable "code_engine_project_name" {
-  description = "Pre-provisioned Code Engine project in the hackathon account."
-  type        = string
-  default     = "watsonx-Hackathon Code Engine"
-}
-
-variable "cr_namespace" {
-  description = "Container Registry namespace. Must be unique within the registry region."
-  type        = string
-  default     = "midevfest-commute-check"
+  default     = "nam5"
 }
 
 variable "app_name" {
   type    = string
-  default = "commute-check"
+  default = "riderecord"
 }
 
 variable "image_tag" {
@@ -42,6 +29,12 @@ variable "min_instances" {
   description = "1 keeps the app warm for the demo; 0 scales to zero and saves credits."
   type        = number
   default     = 1
+}
+
+variable "ibmcloud_api_key" {
+  description = "IBM Cloud API key for watsonx.ai and Speech to Text. Pass via TF_VAR_ibmcloud_api_key; never commit it."
+  type        = string
+  sensitive   = true
 }
 
 variable "watsonx_url" {
@@ -58,8 +51,8 @@ variable "watsonx_model_id" {
   default = "ibm/granite-4-h-small"
 }
 
-variable "google_maps_api_key" {
-  type      = string
-  default   = ""
-  sensitive = true
+variable "stt_url" {
+  description = "URL of the Watson Speech to Text instance. Empty disables voice logging."
+  type        = string
+  default     = ""
 }
