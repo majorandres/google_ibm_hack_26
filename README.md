@@ -90,7 +90,7 @@ cd frontend && npm run build && npm run lint
 
 ## Deploy to Google Cloud
 
-Prerequisites: a Google Cloud project with billing, Docker running, Terraform, the gcloud CLI logged in (`gcloud auth login` and `gcloud auth application-default login`), and `GCP_PROJECT_ID`, `IBMCLOUD_API_KEY`, `WATSONX_PROJECT_ID` and `STT_URL` in `.env`.
+Prerequisites: a Google Cloud project with billing, Docker running, Terraform, the gcloud CLI logged in (`gcloud auth login` and `gcloud auth application-default login`), and `GCP_PROJECT_ID`, `IBMCLOUD_API_KEY` and `WATSONX_PROJECT_ID` in `.env`. `STT_URL` is optional: without it voice logging is off and riders type instead.
 
 ```bash
 bash scripts/deploy.sh
@@ -100,7 +100,30 @@ It creates the registry and the BigQuery dataset, builds and pushes the image, l
 
 Terraform state is local (`infra/terraform.tfstate`, gitignored), so one person should own `deploy.sh`. After that first run, merging to `main` deploys through GitHub Actions; [docs/ci-cd.md](docs/ci-cd.md) has the setup.
 
-**Not verified yet:** nobody has run `deploy.sh` against a real project, called Granite or Speech to Text with real keys, or pointed the app at real Firestore or BigQuery. Tests cover those paths with the cloud calls replaced.
+### Live deployment
+
+Deployed on November 13, 2026.
+
+| | |
+|---|---|
+| App | https://riderecord-gghnd43xpq-uc.a.run.app (public, demo data only) |
+| Google Cloud project | `mich-riderecord`, region `us-central1` |
+| Service | Cloud Run `riderecord`, running as `riderecord-run@mich-riderecord.iam.gserviceaccount.com` |
+| Data | Firestore `(default)` for trips; BigQuery `mich-riderecord.riderecord.trips` (3,000 synthetic rows) |
+| Granite | Not hosted by us. The app calls `ibm/granite-4-h-small` on IBM watsonx.ai with the key in Secret Manager (`riderecord-ibmcloud-api-key`). |
+| Terraform state | On Esteban's machine only. Infra changes (env vars, scaling, secrets) have to be applied from there. |
+
+Check it with `curl https://riderecord-gghnd43xpq-uc.a.run.app/api/health`. It reports whether watsonx and Speech to Text are configured and where trips and stats come from.
+
+**Verified on the live app:** health, the web app, `/api/stats` from BigQuery, trips in Firestore, `/api/extract` through Granite, and a GitHub Actions deploy from `main`.
+
+**Not verified yet:** `/api/complaints` on the live app, and voice logging (`STT_URL` is not set, so Speech to Text is off).
+
+### Problems we hit on the first deploy
+
+- **`bq load` fails with `python3.14: command not found`.** The gcloud SDK picked a Python that is not installed. Point it at a real one before running `deploy.sh`, for example `export CLOUDSDK_PYTHON="/c/Users/<you>/AppData/Local/Programs/Python/Python312/python.exe"`. The deploy still finishes without it, but the dashboard reads the CSV in the image instead of BigQuery.
+- **No demo trips after the very first deploy.** The app seeds the demo rider at startup, and on a fresh project the Firestore role has not taken effect yet (`403 Missing or insufficient permissions` in the logs). Any later deploy or restart seeds them.
+- **`IBMCLOUD_API_KEY: Set IBMCLOUD_API_KEY in .env`.** Save `.env` before running the script.
 
 ## Data sources
 

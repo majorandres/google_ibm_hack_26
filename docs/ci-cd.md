@@ -77,6 +77,8 @@ The deploy job changes only the service's image. Environment variables, the IBM 
 
 ## One-time setup
 
+Done on November 13, 2026 for project `mich-riderecord`: the service exists, the deploy account is `riderecord-deploy@mich-riderecord.iam.gserviceaccount.com`, and `GCP_SA_KEY` and `GCP_PROJECT_ID` are set on the repo. The steps below are only needed to rebuild in a new project or to replace the key.
+
 1. **Create everything once with Terraform.** Run `bash scripts/deploy.sh` locally (see the root `README.md`). It creates the registry, Firestore, the BigQuery dataset and table, the secret and the Cloud Run service. The deploy workflow fails with "does not exist yet" until this has been done.
 2. **Create a deploy service account** and give it only what the workflow needs. Replace `PROJECT` with the project ID:
 
@@ -96,7 +98,7 @@ The deploy job changes only the service's image. Environment variables, the IBM 
    gcloud iam service-accounts keys create key.json --iam-account riderecord-deploy@PROJECT.iam.gserviceaccount.com
    ```
 
-3. **Add it to GitHub.** Repo → Settings → Secrets and variables → Actions. New repository **secret** `GCP_SA_KEY`: the whole contents of `key.json`. New repository **variable** `GCP_PROJECT_ID`: the project ID. Optional variable `GCP_REGION` if not `us-central1`. Then delete `key.json`; never commit it.
+3. **Add it to GitHub.** Repo → Settings → Secrets and variables → Actions. New repository **secret** `GCP_SA_KEY`: the whole contents of `key.json`. New repository **variable** `GCP_PROJECT_ID`: the project ID. Optional variable `GCP_REGION` if not `us-central1`. Then delete `key.json`; never commit it (it is gitignored). On a personal repo only the owner can add secrets and variables; push access is not enough.
 4. **Optional: protect `main`.** Settings → Branches → add a rule for `main` that requires the CI checks (`Backend (ruff + pytest)`, `Frontend (oxlint + build)`, `Terraform (fmt + validate)`, `Docker image (build + smoke test)`) to pass before merging.
 
 A key file is the quick hackathon route. After the event, switch to Workload Identity Federation so no long-lived key exists.
