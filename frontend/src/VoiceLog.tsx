@@ -90,7 +90,7 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
         Say what happened in your own words. For example: “My return ride never came and I waited two hours.”
       </p>
 
-      <button type="button" onClick={toggleRecording} disabled={busy} aria-pressed={recording} className={`${button} w-full py-6 text-2xl ${recording ? 'bg-red-800 hover:bg-red-900' : ''}`}>
+      <button type="button" onClick={toggleRecording} disabled={busy} aria-pressed={recording} className={`${button} w-full py-6 text-2xl ${recording ? 'bg-overdue hover:bg-overdue/90' : ''}`}>
         {recording ? 'Stop recording' : 'Tap to talk'}
       </button>
 
@@ -129,7 +129,7 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
       )}
 
       {result && (
-        <section aria-labelledby="confirm-heading" className="space-y-4 rounded-lg border-2 border-slate-500 p-4">
+        <section aria-labelledby="confirm-heading" className="space-y-4 rounded-lg border border-app-line p-4">
           <h2 id="confirm-heading" className="text-2xl font-semibold">
             Check and save
           </h2>
