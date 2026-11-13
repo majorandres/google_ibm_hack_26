@@ -32,7 +32,7 @@ export default function App() {
     requestAnimationFrame(() => heading.current?.focus())
   }
 
-  const title =SCREENS.find((s) => s.id === screen)?.label ?? 'RideRecord'
+  const title = SCREENS.find((s) => s.id === screen)?.label ?? 'RideRecord'
 
   const navigation = (
     <nav aria-label="Main" className="rr-navigation">
