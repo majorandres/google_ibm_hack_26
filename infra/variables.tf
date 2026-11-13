@@ -51,6 +51,13 @@ variable "watsonx_model_id" {
   default = "ibm/granite-4-h-small"
 }
 
+variable "stt_api_key" {
+  description = "Only if the Speech to Text instance needs its own key. Empty: the IBM Cloud API key is used."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
 variable "stt_url" {
   description = "URL of the Watson Speech to Text instance. Empty disables voice logging."
   type        = string

@@ -35,7 +35,7 @@ Snapshots of the team's Google Doc ("MDevFest") from November 13, about 12:10 PM
 
 ### Built and checked locally (November 13, about 3:45 PM ET)
 
-- **Backend** (`backend/`): FastAPI with `/api/trips`, `/api/extract`, `/api/voice`, `/api/complaints`, `/api/stats`, `/api/providers`, `/api/health`. 15 tests pass; ruff is clean.
+- **Backend** (`backend/`): FastAPI with `/api/trips`, `/api/extract`, `/api/voice`, `/api/complaints`, `/api/stats`, `/api/providers`, `/api/health`. 19 tests pass; ruff is clean.
 - **Frontend** (`frontend/`): four screens (Log a ride, Talk, Complaints, Dashboard). Builds and lints clean. Clicked through in a browser with no keys set: logging a ride, drafting a complaint (routed to the DDOT ADA Coordinator, "162 days left to file"), the typed fallback on Talk, and the dashboard with its two planted flags.
 - **Infra** (`infra/`): Terraform for Cloud Run, Firestore, BigQuery, Artifact Registry and Secret Manager. `terraform validate` passes.
 - **Synthetic data**: with seed 42 the pattern flag fires on exactly the two planted spikes, and return trips fail more than 1.5 times as often as outbound. A test asserts both.
@@ -47,6 +47,8 @@ Check each one before building on it or saying it in the pitch.
 - **Nothing has run against a real cloud service.** No live call to Granite, to Watson Speech to Text, to Firestore or to BigQuery. Tests replace those calls.
 - **Speech to Text may not accept the IBM Cloud API key.** `speech.py` sends `IBMCLOUD_API_KEY` to the STT instance; if that is refused, put the instance's own key in `STT_API_KEY`.
 - **Microphone recording has not been tried.** The browser records WebM/Opus and the backend passes that content type to Watson. If Watson rejects it, upload a `.wav` (the Talk screen has an upload field).
+- **A Granite failure is silent.** With a wrong key, region or model ID the app quietly uses the complaint template and the manual form, while `/api/health` still says `watsonx_configured: true`. After deploying, draft one complaint and check the screen says "Drafted by IBM Granite" before saying so in the pitch.
+- **Demo the microphone in Chrome.** Safari on iPhone records `audio/mp4`, which Watson Speech to Text does not accept.
 - **Nothing is deployed.** `scripts/deploy.sh` has not run. The team needs a Google Cloud project with billing; none is named in this repo.
 - **The GitHub Actions workflows have not run** since the rewrite. The Docker image has not been built.
 - **No accessibility test.** The markup is semantic, labeled and keyboard-reachable by design, but nobody has run axe, VoiceOver or TalkBack on it. The plan calls this a release gate.

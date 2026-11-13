@@ -23,8 +23,6 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
         ? `I heard: ${extracted.incident.summary} Check the details below, then save.`
         : 'I could not pick out the details. Please fill in the form below.'
       setStatus({ text: summary })
-      // Read-back for blind and low-vision riders. shortcut: browser voice; swap for Watson Text to Speech (plan P1).
-      window.speechSynthesis?.speak(new SpeechSynthesisUtterance(summary))
     } catch (e) {
       setStatus({ text: (e as Error).message, error: true })
     } finally {
@@ -55,6 +53,10 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
       setStatus({ text: 'The microphone is not available. You can type what happened instead.', error: true })
     }
   }
+
+  // Read-back on request, so it never talks over a screen reader announcing the same status text.
+  // shortcut: browser voice; swap for Watson Text to Speech (plan P1).
+  const readAloud = () => window.speechSynthesis?.speak(new SpeechSynthesisUtterance(status.text))
 
   const incident = result?.incident
   return (
@@ -95,6 +97,11 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
       </label>
 
       <Status error={status.error}>{status.text}</Status>
+      {result && (
+        <button type="button" onClick={readAloud} className={button}>
+          Read it aloud
+        </button>
+      )}
 
       {result && (
         <section aria-labelledby="confirm-heading" className="space-y-4 rounded-lg border-2 border-slate-500 p-4">
@@ -109,9 +116,11 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
             providers={providers}
             loggedVia="voice"
             initial={{
-              ...(incident?.provider_id && { provider_id: incident.provider_id }),
+              // Never fall back to the last-used provider or to "On time" here: the rider described a
+              // problem, and a wrong pre-selection would send the complaint to the wrong office.
+              provider_id: incident?.provider_id ?? '',
               direction: incident?.direction ?? '',
-              incident_type: incident?.incident_types[0] ?? '',
+              incident_type: incident?.incident_types[0] ?? 'other',
               minutes_late: incident?.minutes_late?.toString() ?? '',
               notes: result.transcript,
             }}

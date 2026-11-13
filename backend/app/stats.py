@@ -6,10 +6,13 @@ provider_name, month, direction, trips, problems.
 """
 
 import csv
+import logging
 from collections import Counter
 from functools import lru_cache
 
 from app.config import data_file, get_settings
+
+log = logging.getLogger(__name__)
 
 # Demo assumption: 49 CFR 37.131(f) does not define "substantial". Say so on screen.
 THRESHOLD = 0.10
@@ -81,7 +84,9 @@ def summarize(rows: list[dict]) -> dict:
 @lru_cache
 def stats() -> dict:
     table = get_settings().bigquery_table
-    return {
-        **summarize(_from_bigquery(table) if table else _from_csv()),
-        "source": "bigquery" if table else "csv",
-    }
+    if table:
+        try:
+            return {**summarize(_from_bigquery(table)), "source": "bigquery"}
+        except Exception:  # the dashboard must survive a missing table or an IAM hiccup
+            log.exception("BigQuery failed; using trips.csv")
+    return {**summarize(_from_csv()), "source": "csv"}

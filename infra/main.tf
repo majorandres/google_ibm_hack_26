@@ -27,7 +27,9 @@ resource "google_project_service" "apis" {
   for_each = toset([
     "artifactregistry.googleapis.com",
     "bigquery.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
     "firestore.googleapis.com",
+    "iam.googleapis.com",
     "run.googleapis.com",
     "secretmanager.googleapis.com",
   ])
@@ -136,6 +138,11 @@ resource "google_cloud_run_v2_service" "app" {
       env {
         name  = "STT_URL"
         value = var.stt_url
+      }
+      # shortcut: plain env var, visible to project viewers; move to Secret Manager after the hackathon.
+      env {
+        name  = "STT_API_KEY"
+        value = var.stt_api_key
       }
       env {
         name = "IBMCLOUD_API_KEY"

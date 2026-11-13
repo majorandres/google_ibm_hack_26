@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api, type Provider } from './api'
 import Complaints from './Complaints'
 import Dashboard from './Dashboard'
@@ -18,6 +18,7 @@ export default function App() {
   const [screen, setScreen] = useState<ScreenId>('log')
   const [providers, setProviders] = useState<Provider[]>([])
   const [error, setError] = useState('')
+  const heading = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
     api.providers().then(setProviders).catch((e: Error) => setError(e.message))
@@ -37,10 +38,14 @@ export default function App() {
             <li key={s.id}>
               <button
                 type="button"
-                onClick={() => setScreen(s.id)}
+                onClick={() => {
+                  setScreen(s.id)
+                  // Move focus to the new screen's heading so screen readers announce the change.
+                  requestAnimationFrame(() => heading.current?.focus())
+                }}
                 aria-current={screen === s.id ? 'page' : undefined}
                 className="min-h-11 w-full rounded-lg border-2 border-blue-800 px-2 py-2 text-lg font-semibold text-blue-900
-                  focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-amber-500
+                  focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-amber-700
                   aria-[current=page]:bg-blue-800 aria-[current=page]:text-white"
               >
                 {s.label}
@@ -51,7 +56,9 @@ export default function App() {
       </nav>
 
       <main>
-        <h1 className="mb-4 text-3xl font-semibold">{title}</h1>
+        <h1 ref={heading} tabIndex={-1} className="mb-4 text-3xl font-semibold focus:outline-none">
+          {title}
+        </h1>
         {error && <Status error>Could not reach RideRecord: {error}</Status>}
         {screen === 'log' && <TripForm providers={providers} />}
         {screen === 'talk' && <VoiceLog providers={providers} />}

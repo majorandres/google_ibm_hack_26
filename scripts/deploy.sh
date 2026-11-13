@@ -25,8 +25,13 @@ export TF_VAR_region="$REGION"
 export TF_VAR_ibmcloud_api_key="$IBMCLOUD_API_KEY"
 export TF_VAR_watsonx_project_id="$WATSONX_PROJECT_ID"
 export TF_VAR_watsonx_model_id="${WATSONX_MODEL_ID:-ibm/granite-4-h-small}"
+export TF_VAR_watsonx_url="${WATSONX_URL:-https://us-south.ml.cloud.ibm.com}"
 export TF_VAR_stt_url="${STT_URL:-}"
+export TF_VAR_stt_api_key="${STT_API_KEY:-}"
 export TF_VAR_image_tag="$TAG"
+
+# Terraform needs these two before it can manage service accounts and IAM in a fresh project.
+gcloud services enable cloudresourcemanager.googleapis.com iam.googleapis.com --project "$GCP_PROJECT_ID"
 
 terraform -chdir=infra init -input=false
 
@@ -40,7 +45,9 @@ docker push "$IMAGE"
 
 # Synthetic demo data for fictional providers. Seeded, so every load is identical.
 python generate_synthetic_trips.py --trips 3000 --seed 42 --out trips.csv
-bq --project_id="$GCP_PROJECT_ID" load --replace --source_format=CSV --autodetect riderecord.trips trips.csv
+# A failed load must not stop the deploy: the app falls back to the trips.csv inside the image.
+bq --project_id="$GCP_PROJECT_ID" load --replace --source_format=CSV --autodetect riderecord.trips trips.csv ||
+  echo "WARNING: bq load failed. The dashboard will use the CSV in the image, not BigQuery."
 
 terraform -chdir=infra apply -input=false -auto-approve
 echo "Deployed: $(terraform -chdir=infra output -raw app_url)"

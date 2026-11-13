@@ -30,10 +30,12 @@ def short_name(p: dict) -> str:
 def match_provider(name: str | None) -> str | None:
     """Provider id for a name Granite returned, or None so the rider picks."""
     wanted = (name or "").strip().lower()
-    return next(
-        (p["id"] for p in providers() if wanted in (p["name"].lower(), short_name(p).lower())),
-        None,
-    )
+    if not wanted:
+        return None
+    exact = [p["id"] for p in providers() if wanted in (p["name"].lower(), short_name(p).lower())]
+    # "SMART ADA" or "SMART" is clear; "DDOT" could be two services, so it is not matched.
+    starts = [p["id"] for p in providers() if p["name"].lower().startswith(wanted)]
+    return exact[0] if exact else starts[0] if len(starts) == 1 else None
 
 
 def channel(channel_id: str | None) -> dict | None:

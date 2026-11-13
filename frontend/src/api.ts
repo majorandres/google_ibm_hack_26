@@ -70,6 +70,7 @@ export const OUTCOMES = [
   { value: 'excessive_length', label: 'Ride too long' },
   { value: 'long_hold', label: 'Long hold' },
   { value: 'driver_conduct', label: 'Driver or safety' },
+  { value: 'other', label: 'Other problem' },
 ]
 export const outcomeLabel = (value: string | null) =>
   OUTCOMES.find((o) => o.value === (value ?? ''))?.label ?? 'Other problem'

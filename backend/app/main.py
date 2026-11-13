@@ -146,7 +146,7 @@ def draft_complaint(body: ComplaintRequest) -> dict:
     routing = complaints.route(trips)
     channel = routing["channel"]
     letter, drafted_by = complaints.draft(
-        channel["name"], body.rider_id, trips, routing["provider"]["name"]
+        channel["name"], body.rider_id, trips, routing["provider"]
     )
     return {
         "channel": channel,

@@ -19,10 +19,18 @@ PROMPT = """Write a short, polite, factual complaint letter from a paratransit r
 Use ONLY the facts in INCIDENTS. Do not invent names, times, or outcomes.
 Address it to: <CHANNEL>. Reading level: 6th-8th grade.
 Structure: who I am (rider ID only) -> what happened (bulleted, dated) ->
-why it matters (missed care/work if stated) -> what I'm asking for ->
-note that repeated late/missed trips may indicate a pattern prohibited
-under 49 CFR 37.131(f). End with "[Rider signature]".
+why it matters (missed care/work if stated) -> what I'm asking for.<LAW>
+Do not cite any law or regulation that is not named above.
+End with "[Rider signature]".
 INCIDENTS: <INCIDENTS>"""
+
+LAW = "Repeated late or missed trips may indicate a pattern prohibited under 49 CFR 37.131(f)."
+
+
+def cites_ada_rule(provider: dict, trips: list[dict]) -> bool:
+    """49 CFR 37.131(f) covers ADA paratransit, not Medicaid rides, and a pattern needs more than one trip."""
+    return provider["type"].startswith("ada_paratransit") and len(trips) >= 2
+
 
 _LABELS = {
     "late_pickup": "the pickup was late",
@@ -68,7 +76,7 @@ def _facts(trips: list[dict], provider_name: str) -> list[dict]:
     ]
 
 
-def template_draft(channel_name: str, rider_id: str, facts: list[dict]) -> str:
+def template_draft(channel_name: str, rider_id: str, facts: list[dict], cite: bool) -> str:
     lines = []
     for f in facts:
         line = f"- {f['date']}, {f['direction']} trip with {f['provider']}: {_LABELS[f['what_happened']]}"
@@ -79,20 +87,22 @@ def template_draft(channel_name: str, rider_id: str, facts: list[dict]) -> str:
         lines.append(line)
     intro = f"I am a paratransit rider (rider ID {rider_id}). I am writing to report problems with my rides."
     ask = "I am asking you to look into these trips and tell me what will be done so this does not keep happening."
-    law = "Repeated late or missed trips may indicate a pattern prohibited under 49 CFR 37.131(f)."
+    law = [LAW, ""] if cite else []
     return "\n".join(
-        [f"To: {channel_name}", "", intro, "", "What happened:", *lines, "", ask, "", law, "", "[Rider signature]"]
+        [f"To: {channel_name}", "", intro, "", "What happened:", *lines, "", ask, "", *law, "[Rider signature]"]
     )
 
 
-def draft(channel_name: str, rider_id: str, trips: list[dict], provider_name: str) -> tuple[str, str]:
+def draft(channel_name: str, rider_id: str, trips: list[dict], provider: dict) -> tuple[str, str]:
     """Returns (letter, drafted_by) where drafted_by is "granite" or "template"."""
-    facts = _facts(trips, provider_name)
-    prompt = PROMPT.replace("<CHANNEL>", channel_name).replace(
+    facts = _facts(trips, provider["name"])
+    cite = cites_ada_rule(provider, trips)
+    law = f"\nThen add this sentence, word for word: {LAW}" if cite else ""
+    prompt = PROMPT.replace("<CHANNEL>", channel_name).replace("<LAW>", law).replace(
         "<INCIDENTS>", json.dumps({"rider_id": rider_id, "incidents": facts})
     )
     try:
         return granite.chat(prompt), "granite"
     except Exception:  # the demo must still produce a letter when watsonx is down
         log.exception("Granite draft failed; using the template")
-        return template_draft(channel_name, rider_id, facts), "template"
+        return template_draft(channel_name, rider_id, facts, cite), "template"

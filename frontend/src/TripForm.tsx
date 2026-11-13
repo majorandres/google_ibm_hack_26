@@ -8,6 +8,7 @@ export type TripDraft = {
   incident_type: string
   minutes_late: string
   notes: string
+  trip_date: string
 }
 
 const LAST_PROVIDER = 'riderecord.lastProvider'
@@ -27,6 +28,7 @@ export default function TripForm(props: {
     incident_type: '',
     minutes_late: '',
     notes: '',
+    trip_date: today(),
   }
   const [draft, setDraft] = useState<TripDraft>({ ...blank, ...props.initial })
   const [status, setStatus] = useState<{ text: string; error?: boolean }>({ text: '' })
@@ -48,7 +50,7 @@ export default function TripForm(props: {
         incident_type: draft.incident_type || null,
         minutes_late: draft.incident_type === 'late_pickup' && draft.minutes_late ? Number(draft.minutes_late) : null,
         notes: draft.notes.trim() || null,
-        trip_date: today(),
+        trip_date: draft.trip_date || today(),
         logged_via: props.loggedVia ?? 'tap',
       })
       localStorage.setItem(LAST_PROVIDER, draft.provider_id)
@@ -112,6 +114,17 @@ export default function TripForm(props: {
           />
         </label>
       )}
+
+      <label className="block text-xl font-semibold">
+        What day was the ride?
+        <input
+          type="date"
+          max={today()}
+          value={draft.trip_date}
+          onChange={(e) => set({ trip_date: e.target.value })}
+          className={`${input} mt-2 font-normal`}
+        />
+      </label>
 
       <label className="block text-xl font-semibold">
         Anything to add? (optional)

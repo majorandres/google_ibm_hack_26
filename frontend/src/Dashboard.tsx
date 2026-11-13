@@ -89,7 +89,7 @@ export default function Dashboard() {
         <h2 id="table-heading" className="text-2xl font-semibold">
           By provider and month
         </h2>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto focus-visible:outline-4 focus-visible:outline-amber-700" tabIndex={0} role="region" aria-labelledby="table-heading">
           <table className="w-full text-lg">
             <thead>
               <tr>
