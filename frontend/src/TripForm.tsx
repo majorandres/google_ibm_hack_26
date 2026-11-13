@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { api, OUTCOMES, RIDER_ID, type Direction, type Provider } from './api'
+import { api, MAX_TEXT, OUTCOMES, RIDER_ID, type Direction, type Provider } from './api'
 import { button, Choice, input, Status } from './ui'
 
 export type TripDraft = {
@@ -130,7 +130,7 @@ export default function TripForm(props: {
         Anything to add? (optional)
         <textarea
           rows={2}
-          maxLength={1000}
+          maxLength={MAX_TEXT}
           value={draft.notes}
           onChange={(e) => set({ notes: e.target.value })}
           className={`${input} mt-2 font-normal`}

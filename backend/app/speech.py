@@ -9,6 +9,16 @@ class SpeechNotConfigured(RuntimeError):
     pass
 
 
+# What /v1/recognize accepts. Notably not audio/mp4 (Safari's MediaRecorder) or .m4a uploads.
+FORMATS = {"alaw", "basic", "flac", "g729", "l16", "mp3", "mpeg", "mulaw", "ogg", "wav", "webm"}
+
+
+def supported(content_type: str) -> bool:
+    """Whether Speech to Text reads it. "audio/webm;codecs=opus" counts as webm."""
+    kind, _, subtype = content_type.split(";")[0].strip().lower().partition("/")
+    return kind == "audio" and subtype in FORMATS
+
+
 async def transcribe(audio: bytes, content_type: str) -> str:
     settings = get_settings()
     if not settings.stt_configured:

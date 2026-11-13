@@ -82,11 +82,18 @@ def summarize(rows: list[dict]) -> dict:
 
 
 @lru_cache
+def _summary(table: str) -> dict:
+    """Cached per source. "" means trips.csv. A failure raises and is not cached, so it is retried."""
+    if table:
+        return {**summarize(_from_bigquery(table)), "source": "bigquery"}
+    return {**summarize(_from_csv()), "source": "csv"}
+
+
 def stats() -> dict:
     table = get_settings().bigquery_table
     if table:
         try:
-            return {**summarize(_from_bigquery(table)), "source": "bigquery"}
+            return _summary(table)
         except Exception:  # the dashboard must survive a missing table or an IAM hiccup
             log.exception("BigQuery failed; using trips.csv")
-    return {**summarize(_from_csv()), "source": "csv"}
+    return _summary("")

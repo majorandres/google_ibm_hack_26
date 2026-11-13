@@ -1,7 +1,11 @@
-"""Regression tests for the findings of the whole-branch review."""
+"""Regression tests for the findings of the whole-branch review and the PR review."""
 
-from app import granite, seed, stats
+import json
+from datetime import date, timedelta
+
+from app import granite, main, seed, stats
 from app.config import Settings
+from app.models import MAX_TEXT
 from tests.test_api import client, complain, post_trip, problem_trip_ids, row  # noqa: F401
 
 CITATION = "49 CFR 37.131(f)"
@@ -14,10 +18,10 @@ def test_dashboard_falls_back_to_the_csv_when_bigquery_fails(client, monkeypatch
     monkeypatch.setattr(stats, "get_settings", lambda: Settings(_env_file=None, bigquery_table="p.d.t"))
     monkeypatch.setattr(stats, "_from_bigquery", broken)
     monkeypatch.setattr(stats, "_from_csv", lambda: [row(30, 3, "p")])
-    stats.stats.cache_clear()
+    stats._summary.cache_clear()
 
     response = client.get("/api/stats")
-    stats.stats.cache_clear()
+    stats._summary.cache_clear()
 
     assert response.status_code == 200
     assert response.json()["source"] == "csv"
@@ -50,3 +54,95 @@ def test_spoken_provider_names_match_when_unambiguous():
     assert seed.match_provider("DDOT") is None  # two DDOT services: the rider picks
     assert seed.match_provider("") is None
     assert seed.match_provider(None) is None
+
+
+# --- PR review findings ---
+
+
+def test_repeated_trip_ids_count_once_and_cannot_hide_a_missing_one(client):  # noqa: F811
+    first = problem_trip_ids(client)[0]
+    once = complain(client, [first, first])
+    assert once.status_code == 200
+    assert CITATION not in once.json()["draft"]  # one trip is not a repeated pattern
+    assert complain(client, [first, first, "bogus"]).status_code == 404
+
+
+def test_cut_off_granite_letter_falls_back_to_the_template(client, monkeypatch):  # noqa: F811
+    class CutOff:
+        def chat(self, **_):
+            message = {"content": "Dear DDOT, on November"}
+            return {"choices": [{"finish_reason": "length", "message": message}]}
+
+    monkeypatch.setattr(granite, "_model", lambda: CutOff())
+    body = complain(client, problem_trip_ids(client)).json()
+    assert body["drafted_by"] == "template"
+    assert body["draft"].endswith("[Rider signature]")
+
+
+def test_bigquery_is_tried_again_after_a_failure(client, monkeypatch):  # noqa: F811
+    calls = []
+
+    def flaky(table):
+        calls.append(table)
+        if len(calls) == 1:
+            raise RuntimeError("IAM not propagated yet")
+        return [row(30, 3, "p")]
+
+    monkeypatch.setattr(stats, "get_settings", lambda: Settings(_env_file=None, bigquery_table="p.d.t"))
+    monkeypatch.setattr(stats, "_from_bigquery", flaky)
+    monkeypatch.setattr(stats, "_from_csv", lambda: [row(30, 3, "p")])
+    stats._summary.cache_clear()
+
+    sources = [client.get("/api/stats").json()["source"] for _ in range(3)]
+    stats._summary.cache_clear()
+
+    assert sources == ["csv", "bigquery", "bigquery"]
+    assert len(calls) == 2  # the good BigQuery answer is cached
+
+
+def _granite_says(date_mentioned):
+    return json.dumps(
+        {
+            "provider": None,
+            "direction": "return",
+            "incident_types": ["no_show"],
+            "minutes_late": None,
+            "date_mentioned": date_mentioned,
+            "summary": "The ride never came.",
+        }
+    )
+
+
+def test_extract_keeps_a_resolved_past_date_and_drops_anything_else(client, monkeypatch):  # noqa: F811
+    prompts = []
+    three_days_ago = str(date.today() - timedelta(days=3))
+    for said, kept in [
+        (three_days_ago, three_days_ago),
+        ("last Tuesday", None),
+        (str(date.today() + timedelta(days=1)), None),
+        (None, None),
+    ]:
+        monkeypatch.setattr(granite, "chat", lambda prompt, said=said: prompts.append(prompt) or _granite_says(said))
+        incident = client.post("/api/extract", json={"transcript": "it never came"}).json()["incident"]
+        assert incident["date_mentioned"] == kept
+    assert date.today().isoformat() in prompts[0]  # Granite needs today to resolve "yesterday"
+
+
+def test_a_typed_description_fits_in_the_notes_it_prefills(client):  # noqa: F811
+    assert client.post("/api/extract", json={"transcript": "x" * MAX_TEXT}).status_code == 200
+    assert post_trip(client, notes="x" * MAX_TEXT).status_code == 201
+
+
+def test_voice_rejects_audio_formats_speech_to_text_cannot_read(client):  # noqa: F811
+    response = client.post("/api/voice", content=b"abc", headers={"Content-Type": "audio/mp4"})
+    assert response.status_code == 415
+    assert "type" in response.json()["detail"].lower()
+
+
+def test_paid_endpoints_are_rate_limited_per_caller(client, monkeypatch):  # noqa: F811
+    monkeypatch.setattr(main, "PAID_CALLS_PER_MINUTE", 2)
+    ask = lambda ip: client.post(
+        "/api/extract", json={"transcript": "hi"}, headers={"X-Forwarded-For": f"6.6.6.6, {ip}"}
+    )
+    assert [ask("1.1.1.1").status_code for _ in range(3)] == [200, 200, 429]
+    assert ask("2.2.2.2").status_code == 200  # the last X-Forwarded-For entry is the caller

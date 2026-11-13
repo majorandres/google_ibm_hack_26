@@ -19,6 +19,7 @@ def client(monkeypatch):
     monkeypatch.setattr("app.speech.get_settings", lambda: settings)
     granite._model.cache_clear()
     store._mem.clear()
+    main._paid_calls.clear()
     with TestClient(app) as c:  # the context manager runs lifespan, which seeds the demo rider
         yield c
 
@@ -74,12 +75,12 @@ def test_extract_reads_fenced_json_and_maps_the_provider(client, monkeypatch):
     assert body["incident"]["incident_types"] == ["no_show"]
 
 
-def test_extract_retries_once_then_falls_back_to_the_manual_form(client, monkeypatch):
+def test_extract_falls_back_to_the_manual_form_without_a_wasted_retry(client, monkeypatch):
     calls = []
     monkeypatch.setattr(granite, "chat", lambda prompt: calls.append(1) or "Sorry, no.")
     body = client.post("/api/extract", json={"transcript": "hello"}).json()
     assert body == {"transcript": "hello", "incident": None}
-    assert len(calls) == 2
+    assert len(calls) == 1  # temperature 0: a retry would get the same answer
 
 
 def test_extract_without_watsonx_keys_falls_back_to_the_manual_form(client):
@@ -172,10 +173,10 @@ def test_seed_42_flags_exactly_the_two_planted_spikes(client, tmp_path, monkeypa
         writer.writeheader()
         writer.writerows(rows)
     monkeypatch.setattr(stats, "data_file", lambda name: tmp_path / name)
-    stats.stats.cache_clear()
+    stats._summary.cache_clear()
 
     body = client.get("/api/stats").json()
-    stats.stats.cache_clear()
+    stats._summary.cache_clear()
 
     assert body["synthetic"] is True and body["source"] == "csv"
     flagged = {(r["provider_name"], r["month"]) for r in body["by_provider_month"] if r["flagged"]}

@@ -43,8 +43,9 @@ gcloud auth configure-docker "$REGISTRY" --quiet
 docker build --platform linux/amd64 -t "$IMAGE" .
 docker push "$IMAGE"
 
-# Synthetic demo data for fictional providers. Seeded, so every load is identical.
-python generate_synthetic_trips.py --trips 3000 --seed 42 --out trips.csv
+# Synthetic demo data for fictional providers: the exact CSV the image built, so BigQuery
+# and the in-image fallback always match and the host needs no Python.
+docker run --rm --platform linux/amd64 --entrypoint cat "$IMAGE" trips.csv > trips.csv
 # A failed load must not stop the deploy: the app falls back to the trips.csv inside the image.
 bq --project_id="$GCP_PROJECT_ID" load --replace --source_format=CSV --autodetect riderecord.trips trips.csv ||
   echo "WARNING: bq load failed. The dashboard will use the CSV in the image, not BigQuery."

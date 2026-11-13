@@ -1,5 +1,7 @@
 // Demo account: there is no sign-in in the hackathon build. Never log real riders here.
 export const RIDER_ID = 'demo-denise'
+// Same limit as the backend's MAX_TEXT: a typed description becomes the trip notes.
+export const MAX_TEXT = 2000
 
 export type Provider = { id: string; name: string; type: string; region: string }
 export type Direction = 'outbound' | 'return'
@@ -24,6 +26,7 @@ export type Extracted = {
     direction: Direction | null
     incident_types: string[]
     minutes_late: number | null
+    date_mentioned: string | null // YYYY-MM-DD, always in the past
     summary: string
   } | null
 }
@@ -79,7 +82,9 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`/api${path}`, init)
   if (!response.ok) {
     const body = await response.json().catch(() => null)
-    throw new Error(typeof body?.detail === 'string' ? body.detail : `Something went wrong (${response.status}).`)
+    // FastAPI sends a string for our own errors and a list for validation errors.
+    const detail = Array.isArray(body?.detail) ? body.detail[0]?.msg : body?.detail
+    throw new Error(typeof detail === 'string' ? detail : `Something went wrong (${response.status}).`)
   }
   return response.json()
 }

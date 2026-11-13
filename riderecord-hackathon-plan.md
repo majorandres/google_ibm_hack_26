@@ -137,7 +137,7 @@ Rules: Never guess numbers that were not said. If unsure, use null.
 Known providers: DDOT Paratransit, DDOT Now, SMART ADA, Modivcare, SafeRide.
 Rider said: "{transcript}"
 ```
-Validate with Pydantic. On parse failure, retry once and then fall back to the Quick Log form pre-filled with the transcript.
+Validate with Pydantic. On parse failure, fall back to the Quick Log form pre-filled with the transcript. No retry: at temperature 0 the same prompt returns the same answer.
 
 ### 4.3 Prompt: complaint drafting
 ```
@@ -257,7 +257,7 @@ bq load --source_format=CSV --autodetect riderecord.trips trips.csv
 |---|---|
 | watsonx.ai rate limits / latency | Cache extraction results for demo transcripts; show a loading state with live transcript |
 | Speech to Text mic issues on venue Wi-Fi | Upload a pre-recorded `.wav` of the demo sentence |
-| JSON parse errors from the model | Pydantic validation + one retry + pre-filled manual form |
+| JSON parse errors from the model | Pydantic validation + pre-filled manual form |
 | Deploy breaks at Hour 13 | Freeze at 12:00; keep the last good Cloud Run revision; have the backup video |
 | Scope creep | Hour 10 go/no-go; P1 only in listed order |
 

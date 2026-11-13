@@ -12,6 +12,10 @@ class GraniteNotConfigured(RuntimeError):
     pass
 
 
+class GraniteCutOff(RuntimeError):
+    """The answer hit max_tokens, so it is incomplete (a letter missing its end, broken JSON)."""
+
+
 @lru_cache
 def _model() -> ModelInference:
     settings = get_settings()
@@ -30,8 +34,12 @@ def _model() -> ModelInference:
 
 def chat(prompt: str) -> str:
     # temperature 0: extraction and complaint drafts must not vary or embellish.
+    # 1500 tokens fits a letter about the 20 trips a complaint allows.
     response = _model().chat(
         messages=[{"role": "user", "content": prompt}],
-        params={"temperature": 0, "max_tokens": 600},
+        params={"temperature": 0, "max_tokens": 1500},
     )
-    return response["choices"][0]["message"]["content"]
+    choice = response["choices"][0]
+    if choice.get("finish_reason") == "length":
+        raise GraniteCutOff("Granite's answer was cut off at max_tokens")
+    return choice["message"]["content"]

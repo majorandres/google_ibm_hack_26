@@ -1,7 +1,11 @@
-import { useRef, useState } from 'react'
-import { api, type Extracted, type Provider } from './api'
+import { useEffect, useRef, useState } from 'react'
+import { api, MAX_TEXT, type Extracted, type Provider } from './api'
 import TripForm from './TripForm'
 import { button, input, Status } from './ui'
+
+// Speech to Text cannot read audio/mp4, Safari's default, so ask for a format it can.
+const RECORDING_TYPES = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus']
+const UPLOAD_TYPES = 'audio/wav,audio/mpeg,audio/ogg,audio/webm,audio/flac,.wav,.mp3,.ogg,.webm,.flac'
 
 /** Talk (or type) -> Watson Speech to Text -> Granite extraction -> the rider confirms -> save. */
 export default function VoiceLog({ providers }: { providers: Provider[] }) {
@@ -11,6 +15,19 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
   const [typed, setTyped] = useState('')
   const [result, setResult] = useState<Extracted | null>(null)
   const [status, setStatus] = useState<{ text: string; error?: boolean }>({ text: '' })
+
+  // Leaving this screen mid-recording must turn the microphone off and drop the half-recording.
+  useEffect(
+    () => () => {
+      const mr = recorder.current
+      if (mr && mr.state !== 'inactive') {
+        mr.onstop = null
+        mr.stop()
+        mr.stream.getTracks().forEach((t) => t.stop())
+      }
+    },
+    [],
+  )
 
   async function understand(request: Promise<Extracted>) {
     setBusy(true)
@@ -36,9 +53,17 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
       return
     }
     try {
+      const mimeType = RECORDING_TYPES.find((t) => MediaRecorder.isTypeSupported(t))
+      if (!mimeType) {
+        setStatus({
+          text: 'This browser cannot record in a format we can read. Type what happened, or upload a WAV or MP3 recording.',
+          error: true,
+        })
+        return
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const chunks: Blob[] = []
-      const mr = new MediaRecorder(stream)
+      const mr = new MediaRecorder(stream, { mimeType })
       mr.ondataavailable = (e) => chunks.push(e.data)
       mr.onstop = () => {
         stream.getTracks().forEach((t) => t.stop())
@@ -78,7 +103,7 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
       >
         <label className="block text-xl font-semibold">
           Or type what happened
-          <textarea rows={2} maxLength={2000} value={typed} onChange={(e) => setTyped(e.target.value)} className={`${input} mt-2 font-normal`} />
+          <textarea rows={2} maxLength={MAX_TEXT} value={typed} onChange={(e) => setTyped(e.target.value)} className={`${input} mt-2 font-normal`} />
         </label>
         <button type="submit" disabled={busy || !typed.trim()} className={button}>
           Use this
@@ -89,7 +114,7 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
         Or upload a recording
         <input
           type="file"
-          accept="audio/*"
+          accept={UPLOAD_TYPES}
           disabled={busy}
           onChange={(e) => e.target.files?.[0] && void understand(api.voice(e.target.files[0]))}
           className={`${input} mt-2 font-normal`}
@@ -122,7 +147,10 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
               direction: incident?.direction ?? '',
               incident_type: incident?.incident_types[0] ?? 'other',
               minutes_late: incident?.minutes_late?.toString() ?? '',
-              notes: result.transcript,
+              // A long spoken description can pass the notes limit; the full text stays above.
+              notes: result.transcript.slice(0, MAX_TEXT),
+              // "Last Tuesday" matters: the filing deadline counts from the ride's day.
+              ...(incident?.date_mentioned ? { trip_date: incident.date_mentioned } : {}),
             }}
           />
         </section>

@@ -1,11 +1,13 @@
 import logging
+import time
+from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
 
 import httpx
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.staticfiles import StaticFiles
 
@@ -17,6 +19,24 @@ log = logging.getLogger(__name__)
 
 DEMO_RIDER = "demo-denise"  # fictional rider used in the demo script
 MAX_AUDIO_BYTES = 10 * 1024 * 1024
+# The app is public and Granite / Speech to Text bill the team's IBM key. Per caller and
+# per instance: loose enough for a room of judges, tight enough to stop a loop.
+PAID_CALLS_PER_MINUTE = 20
+_paid_calls: defaultdict[str, deque[float]] = defaultdict(deque)
+
+
+def limit_paid_calls(request: Request) -> None:
+    # Cloud Run appends the caller's address to X-Forwarded-For, so the last entry is the one
+    # a client cannot fake. Locally there is no such header.
+    forwarded = request.headers.get("x-forwarded-for", "").split(",")[-1].strip()
+    caller = forwarded or (request.client.host if request.client else "unknown")
+    now = time.monotonic()
+    calls = _paid_calls[caller]
+    while calls and now - calls[0] > 60:
+        calls.popleft()
+    if len(calls) >= PAID_CALLS_PER_MINUTE:
+        raise HTTPException(429, "Too many requests. Wait a minute and try again.")
+    calls.append(now)
 
 
 def _save(trip_in: TripIn) -> dict:
@@ -106,21 +126,24 @@ def _extract(transcript: str) -> dict:
     return {"transcript": transcript, "incident": incident}
 
 
-@app.post("/api/extract")
+@app.post("/api/extract", dependencies=[Depends(limit_paid_calls)])
 def extract_incident(body: ExtractRequest) -> dict:
     return _extract(body.transcript)
 
 
-@app.post("/api/voice")
+@app.post("/api/voice", dependencies=[Depends(limit_paid_calls)])
 async def voice(request: Request) -> dict:
     """Raw audio in the request body (Content-Type from the browser's MediaRecorder or an uploaded file)."""
+    content_type = request.headers.get("content-type", "audio/webm")
+    if not speech.supported(content_type):
+        raise HTTPException(
+            415, "This audio type cannot be read. Upload WAV, MP3, OGG or WebM, or type what happened."
+        )
     audio = await request.body()
     if not audio or len(audio) > MAX_AUDIO_BYTES:
         raise HTTPException(413 if audio else 400, "Send 1 byte to 10 MB of audio.")
     try:
-        transcript = await speech.transcribe(
-            audio, request.headers.get("content-type", "audio/webm")
-        )
+        transcript = await speech.transcribe(audio, content_type)
     except speech.SpeechNotConfigured as exc:
         raise HTTPException(503, str(exc)) from exc
     except (httpx.HTTPError, KeyError) as exc:
@@ -131,12 +154,13 @@ async def voice(request: Request) -> dict:
     return await run_in_threadpool(_extract, transcript)
 
 
-@app.post("/api/complaints")
+@app.post("/api/complaints", dependencies=[Depends(limit_paid_calls)])
 def draft_complaint(body: ComplaintRequest) -> dict:
     """Draft only. Nothing is stored or sent; the rider files it themselves."""
     mine = {t["id"]: t for t in store.by_rider(body.rider_id)}
-    trips = [mine[i] for i in body.trip_ids if i in mine]
-    if len(trips) != len(set(body.trip_ids)):
+    wanted = dict.fromkeys(body.trip_ids)  # a repeated id counts once, in the order sent
+    trips = [mine[i] for i in wanted if i in mine]
+    if len(trips) != len(wanted):
         raise HTTPException(404, "Some of those trips were not found for this rider.")
     if any(not t["incident_type"] for t in trips):
         raise HTTPException(422, "Only trips with a problem can go in a complaint.")
