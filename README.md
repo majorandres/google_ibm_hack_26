@@ -1,25 +1,63 @@
-# Commute Check
+# RideRecord
 
-A shift-aware commute check for the Michigan DevFest AI Hackathon 2026: can a worker without a car make the round trip to a job by bus, at the hours the shift demands? See [docs/why-we-are-building-this.md](docs/why-we-are-building-this.md).
+RideRecord lets Michigan paratransit and Medicaid riders log a failed ride by voice in 10 seconds, turns their logs into complaints routed to the right agency before the deadline, and gives advocates independent data on patterns federal law prohibits.
+
+Built for the Michigan DevFest AI Hackathon 2026 (Mobility track) on IBM Cloud and Google Cloud.
+
+- The problem and the long-term plan: [michigan-accessible-transit-problem-statement.md](michigan-accessible-transit-problem-statement.md)
+- What we build today: [riderecord-hackathon-plan.md](riderecord-hackathon-plan.md)
+- Why, in one page: [docs/why-we-are-building-this.md](docs/why-we-are-building-this.md)
+
+## What works in this repo
+
+| Screen | What it does | Endpoint |
+|---|---|---|
+| **Log a ride** | Pick the ride service, the direction and how it went. The last service is remembered, so a routine log is three taps. | `POST /api/trips` |
+| **Talk** | Say (or type, or upload a recording of) what happened. Watson Speech to Text transcribes it, Granite pulls out the incident, the rider checks it and saves. The summary is read aloud. | `POST /api/voice`, `POST /api/extract` |
+| **Complaints** | Pick logged problem rides. The backend routes them to the right office, counts the days left to file, and Granite drafts a plain-language letter from the logged facts only. The rider copies, downloads or emails it. **Nothing is sent automatically.** | `POST /api/complaints` |
+| **Dashboard** | Late, missed and denied trips by provider and month, with a "possible pattern" flag. **Synthetic data for fictional providers**, labeled on screen. | `GET /api/stats` |
+
+Not built yet (see the plan's P1 and P2): ride history screen and PDF export, map view, Watson Text to Speech read-back (the browser's voice is used for now), AI pattern summary, caregiver mode, Spanish and Arabic, SMS, sign-in.
+
+## Which tool does what
+
+| Tool | Job in the app | Code |
+|---|---|---|
+| **IBM watsonx.ai, Granite** (`ibm/granite-4-h-small`) | Turns a spoken description into a structured incident. Drafts the complaint letter. | `backend/app/extract.py`, `backend/app/complaints.py` |
+| **IBM Watson Speech to Text** | Transcribes voice logs. | `backend/app/speech.py` |
+| **Google Cloud Run** | Hosts the one container (API and web app). | `infra/main.tf`, `Dockerfile` |
+| **Google Firestore** | Stores logged trips. | `backend/app/store.py` |
+| **Google BigQuery** | Aggregates the synthetic trips for the dashboard. | `backend/app/stats.py` |
+
+IBM is the intelligence layer and Google is the app and data layer. Routing a complaint to an office and counting the deadline are plain code, not AI (`backend/app/complaints.py`, `backend/app/seed.py`).
 
 ## Layout
 
 | Path | What |
 |---|---|
-| `backend/` | Python 3.12 API (FastAPI, managed with [uv](https://docs.astral.sh/uv/)). Calls IBM Granite on watsonx.ai. |
-| `frontend/` | React + TypeScript + Tailwind (Vite). |
-| `infra/` | Terraform for IBM Cloud: Container Registry namespace and a Code Engine app. |
+| `backend/` | Python API (FastAPI, managed with [uv](https://docs.astral.sh/uv/)). |
+| `frontend/` | React + TypeScript + Tailwind (Vite). Installable as a PWA. |
+| `infra/` | Terraform for Google Cloud: Cloud Run, Firestore, BigQuery, Artifact Registry, Secret Manager. |
 | `Dockerfile` | One image: FastAPI serves the API under `/api` and the built frontend at `/`. |
-| `scripts/deploy.sh` | Build, push and `terraform apply`. |
-| `.github/workflows/` | CI on every PR; deploy to Code Engine on every push to `main`. See [docs/ci-cd.md](docs/ci-cd.md). |
-| `docs/` | Project context and Google Doc exports. |
+| `scripts/deploy.sh` | Build, push, load BigQuery and `terraform apply`. |
+| `.github/workflows/` | CI on every PR; deploy to Cloud Run on every push to `main`. See [docs/ci-cd.md](docs/ci-cd.md). |
+| `seed_data.json` | Cited evidence for the pitch, real providers, real complaint channels. |
+| `generate_synthetic_trips.py` | Writes the synthetic dashboard data (fictional providers only). |
+| `docs/` | Project context, hackathon rules and Google Doc exports. |
 
 ## Local development
 
-Prerequisites: Python 3.12, uv, Node 22+.
+Prerequisites: Python 3.12+, uv, Node 22+.
 
-1. Copy `.env.example` to `.env` and fill it in. `.env` is gitignored; never commit keys.
-2. Start the backend (http://localhost:8000, docs at `/docs`):
+The app runs with **no keys at all**: trips stay in memory, the dashboard reads `trips.csv`, complaints come from a template, and the Talk screen falls back to typing with a manual form. A demo rider ("Denise") with four logged rides is created at startup.
+
+1. Generate the synthetic dashboard data (gitignored):
+
+   ```bash
+   python generate_synthetic_trips.py --trips 3000 --seed 42 --out trips.csv
+   ```
+
+2. Start the backend (http://localhost:8000, API docs at `/docs`):
 
    ```bash
    cd backend && uv run uvicorn app.main:app --reload
@@ -31,6 +69,15 @@ Prerequisites: Python 3.12, uv, Node 22+.
    cd frontend && npm install && npm run dev
    ```
 
+To turn on the cloud services, copy `.env.example` to `.env` and fill it in. `.env` is gitignored; never commit keys. `GET /api/health` shows which services are on.
+
+| Set this | To get |
+|---|---|
+| `IBMCLOUD_API_KEY` + `WATSONX_PROJECT_ID` | Granite extraction and complaint drafting |
+| `STT_URL` | Voice logging through Watson Speech to Text |
+| `USE_FIRESTORE=true` | Trips saved in Firestore (needs `gcloud auth application-default login`) |
+| `BIGQUERY_TABLE` | Dashboard aggregated in BigQuery |
+
 Checks:
 
 ```bash
@@ -41,35 +88,38 @@ cd backend && uv run pytest && uv run ruff check .
 cd frontend && npm run build && npm run lint
 ```
 
-The app runs without any keys; `/api/granite/ask` returns 503 until `IBMCLOUD_API_KEY` and `WATSONX_PROJECT_ID` are set.
+## Deploy to Google Cloud
 
-## Deploy to IBM Cloud
-
-Prerequisites: Docker running, Terraform, and `IBMCLOUD_API_KEY` + `WATSONX_PROJECT_ID` in `.env`.
+Prerequisites: a Google Cloud project with billing, Docker running, Terraform, the gcloud CLI logged in (`gcloud auth login` and `gcloud auth application-default login`), and `GCP_PROJECT_ID`, `IBMCLOUD_API_KEY`, `WATSONX_PROJECT_ID` and `STT_URL` in `.env`.
 
 ```bash
 bash scripts/deploy.sh
 ```
 
-It creates the registry namespace, builds and pushes the image to `us.icr.io`, then applies the rest of `infra/` and prints the app URL.
+It creates the registry and the BigQuery dataset, builds and pushes the image, loads the synthetic trips into `riderecord.trips`, applies the rest of `infra/` and prints the app URL.
 
-Terraform state is local (`infra/terraform.tfstate`, gitignored), so one person should own `deploy.sh`.
+Terraform state is local (`infra/terraform.tfstate`, gitignored), so one person should own `deploy.sh`. After that first run, merging to `main` deploys through GitHub Actions; [docs/ci-cd.md](docs/ci-cd.md) has the setup.
 
-After that first run, merging to `main` deploys automatically through GitHub Actions. It needs the `IBMCLOUD_API_KEY` repository secret. [docs/ci-cd.md](docs/ci-cd.md) lists every step of both workflows, the one-time setup, and when to still use `deploy.sh`.
+**Not verified yet:** nobody has run `deploy.sh` against a real project, called Granite or Speech to Text with real keys, or pointed the app at real Firestore or BigQuery. Tests cover those paths with the cloud calls replaced.
 
-### What the hackathon account allows
+## Data sources
 
-The account grants Viewer on the resource group, so Terraform cannot create service instances. It deploys into the instances IBM pre-provisioned:
-
-| Instance | Region | Used for |
+| Data | Source | Used for |
 |---|---|---|
-| watsonx-Hackathon Code Engine | us-south | Runs the app (managed by `infra/`) |
-| watsonx-Hackathon WML / WS | us-south | Granite via watsonx.ai. Chat model available: `ibm/granite-4-h-small` |
-| watsonx-Hackathon Cloudant | us-south | Available, not used yet |
-| watsonx-Hackathon COS | global | Available, not used yet |
-| watsonx-Hackathon STT / TTS | us-south | Available, not used yet |
-| watsonx-Hackathon Orchestrate | ca-tor | Available, not used yet |
+| `seed_data.json` → `evidence[]` | News, government and research sources, each with its URL | Pitch and About text only |
+| `seed_data.json` → `providers[]`, `complaint_channels[]` | Public agency and FTA pages, each with its URL | Provider picker, complaint routing |
+| Synthetic trips | `generate_synthetic_trips.py`, seed 42 | Dashboard |
+
+Rules we hold to:
+
+- **No real rider data.** The only rider is a fictional demo account. Notes ask riders to leave out addresses and medical details.
+- **Synthetic data uses fictional providers only.** Real agency names appear in the provider picker and complaint routing, never in dashboard statistics.
+- **Unconfirmed contacts are not shown as real.** Channels marked `TODO_VERIFY` in `seed_data.json` (SMART, Medicaid plan grievance) show a "not confirmed" message instead of contact details.
+- **The pattern flag is an assumption.** 10% of at least 30 logged trips in a month. The regulation does not define "substantial"; the dashboard says so and never says "violation".
+- **AI drafts, the rider sends.** Every draft carries: "This is a draft to help you file. It is not legal advice. Review before sending."
 
 ## AI tools used
 
-Claude (Anthropic) was used for research, docs and scaffolding this repo. IBM Granite (`ibm/granite-4-h-small`) on watsonx.ai is the model the product calls.
+- **IBM Granite** (`ibm/granite-4-h-small`) on watsonx.ai and **IBM Watson Speech to Text** are the models the product calls.
+- **Claude (Anthropic)** was used for research, docs and writing the code in this repo.
+- **IBM Bob** reviewed the team's earlier idea.

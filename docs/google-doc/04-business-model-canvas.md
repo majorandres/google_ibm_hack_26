@@ -2,6 +2,8 @@
      Source: https://docs.google.com/document/d/1JfQvlIcYmX3VJww7KUwIZINZ9PYFhvXmoMTAL6vWr4Q/edit?tab=t.a8zsaqfg3a80
      The Google Doc is the source of truth; this file is a snapshot. -->
 
+> **Warning for readers and agents:** this canvas is for the team's earlier idea, a shift-aware commute check, **not for RideRecord**. The team pivoted on November 13, 2026 and has not written a canvas for RideRecord.
+
 # Business Model Canvas
 
 Shift-aware commute check for Detroit workers without a car

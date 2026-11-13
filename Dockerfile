@@ -13,6 +13,10 @@ WORKDIR /srv
 COPY backend/pyproject.toml backend/uv.lock ./
 RUN uv sync --frozen --no-dev
 COPY backend/app ./app
+# Real providers and complaint channels, plus the synthetic dashboard data (the CSV
+# fallback when BIGQUERY_TABLE is not set). Seeded, so every build gets the same rows.
+COPY seed_data.json generate_synthetic_trips.py ./
+RUN .venv/bin/python generate_synthetic_trips.py --trips 3000 --seed 42 --out trips.csv
 COPY --from=web /web/dist ./static
 EXPOSE 8080
 CMD [".venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]

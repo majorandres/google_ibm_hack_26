@@ -1,58 +1,38 @@
 # Why we are building this
 
-Written November 13, 2026. Every figure below comes from `google-doc/02-research-report.md`, which has the full sourcing and a table of which statistics are safe to quote.
+Written November 13, 2026. This is the one-page version. The full problem statement, with sources, is [`../michigan-accessible-transit-problem-statement.md`](../michigan-accessible-transit-problem-statement.md). Every figure below is in `seed_data.json → evidence[]` with its URL.
 
 ## The short version
 
-A job offer is a months-long commitment. A Detroit worker without a car has no way to find out, before saying yes, whether the commute will hold up in both directions at the hours the shift demands. Trip planners answer one trip at a time. We are building the tool that answers the job question: take it, ask for a different shift, or line up a ride before day one.
+When a paratransit or Medicaid ride fails, the rider has a phone call and a memory. The agency has the data. RideRecord gives the rider their own dated record, turns it into a complaint addressed to the office that has to answer it, and adds the records up so advocates can see patterns without relying on what agencies report about themselves.
 
 ## The person
 
-A Detroit resident without a car who has been offered a second-shift job (3:00 PM to 11:30 PM) at a plant in Warren or Sterling Heights. Getting to work at 3:00 PM by bus is usually possible. Getting home at 11:30 PM, after service thins out, is where the commute fails. That return trip is the part existing tools do not check.
+"Denise" (fictional) lives in Detroit, uses a wheelchair, and depends on paratransit to get to medical appointments. The ride there usually comes. The ride back is the one that fails: late, or never. When she calls, she is told to call someone else.
 
 ## The problem, with evidence
 
-- **Many Detroiters have no car.** 21% of Detroit households have no vehicle, against 7% in Michigan and 8% nationally. 36% of Detroiters are transportation insecure, about double the national rate of 17%. ([Planet Detroit, Nov 2025](https://planetdetroit.org/2025/11/transportation-insecurity-detroit-research/))
-- **The jobs are outside the city.** Nearly 70% of employed Detroit residents work outside Detroit. ([Axios Detroit, Sept 2025](https://www.axios.com/local/detroit/2025/09/29/detroit-residents-commuter-wage-gap))
-- **Transit does not reach most of them.** The regional transit authority found Detroiters can reach 13% of all jobs in the three-county area, and about 21% of entry-level jobs, within a 60-minute transit trip at peak. 27 of 40 high-need Detroit census tracts cannot reach any suburban job cluster. At 11 PM, access to major job sites such as Stellantis Jefferson North and Amazon Fairgrounds falls by about half. ([RTA Detroit Workforce Mobility Equity Report](https://www.rtamichigan.org/app/uploads/2025/06/RTA-Detroit-Workforce-Mobility-Equity-Report-F-1.pdf))
-- **The buses that exist are unreliable.** DDOT's dashboard for January 2026 showed 68% on-time performance in the morning and 62% in the afternoon, against a goal of 85%. ([DDOT Performance Dashboard](https://detroitmi.gov/taxonomy/term/5641))
-- **Employers feel it too.** A 2024 state survey found transportation was the most pressing barrier to workforce participation in all 16 Michigan Works! regions. ([Michigan LEO](https://www.michigan.gov/leo/news/2025/12/18/new-playbook-helps-employers-tackle-transportation-barriers-to-strengthen-retention-and-productivity))
-
-## Why now
-
-Wayne County voters ended the suburban transit opt-out system on August 4, 2026, with 67% support ([Transportation Riders United](https://www.detroittransit.org/?p=21965)). SMART is adding eight new routes and five extensions in phases from September 2026 through 2029. Which jobs are reachable will keep changing for three years, and nobody tracks that job by job. A tool that reads the published schedules stays current as each new route arrives.
+- **About 1 in 5 people in Michigan have a disability.** In Detroit that is more than 128,000 residents. Rideshare is not required by federal law to be accessible, so paratransit and Medicaid rides are often the only option.
+- **Detroit paratransit has a long complaint history.** Years of missed pickups and long waits, a fight over a ~$50M contract in 2022, emergency contracts in 2023, and a federal warning about funding.
+- **It is improving, and the data is self-reported.** DDOT launched same-day "DDOT Now" in June 2025 and says each provider is at least 98% on time. That figure comes from the agency.
+- **Medicaid rides fail with no one owning it.** In 2026 a Farmington Hills man in a powered wheelchair missed nearly a dozen appointments. The ride company pointed to its contractors; the insurer cited privacy rules. A prior state audit found the Medicaid ride system not effective, and a new audit covering $160.5M in spending is due in late 2026.
+- **Federal law bans the pattern, not the single failure.** 49 CFR 37.131(f) prohibits patterns of substantial numbers of untimely pickups, missed trips, denials and excessively long trips. It does not define "substantial". The FTA's complaint form asks for dates and times, which is what RideRecord collects.
 
 ## What the product does
 
-1. **Check a job.** The worker enters the job's address, their shift, their work days and where they are leaving from.
-2. **Give a verdict.** Yes, risky or no for the round trip, with the trip there and the trip home shown separately.
-3. **Show why.** A risk score built from the schedule: number of transfers, how long the wait is if a bus is missed, the margin between clock-out and the last bus home, and the agency's published on-time rate.
-4. **Offer a backup plan** when the answer is risky or no: a different shift, a MichiVan vanpool, or SMART Flex on-demand service, each marked for whether it covers that shift.
-5. **Employer view** (second audience): for a plant's shift times, how many applicants without a car can make the round trip, and what changes if a shift ends 30 minutes earlier.
+1. **Ride log.** Log a trip by tapping, or by saying what happened.
+2. **Complaint builder.** Pick logged problems; get a draft letter addressed to the right office, with the days left to file. The rider reviews it and sends it.
+3. **Reliability dashboard.** Late, missed and denied trips by provider and month, with a "possible pattern" flag.
 
-## Two conditions the research set
+## What it does not do, and what we do not claim
 
-- **"Reliable" means a schedule-based risk score, and the product says so.** Live bus positions cannot be obtained in a one-day build: DDOT lists no public real-time feed, and SMART's requires an application with no stated turnaround. The score uses published schedules and published on-time rates.
-- **A "no" must come with a next step.** A verdict alone does not get anyone to work.
+- **It does not send complaints.** AI drafts; the rider sends. Every draft says it is not legal advice.
+- **It does not fix the root causes.** Those are funding and labor. Software cannot add drivers or wheelchair vans. It can change information, documentation and accountability.
+- **The dashboard is demo data.** Synthetic trips for fictional providers, labeled on screen. Real agency names never appear next to synthetic numbers.
+- **A flag is not a finding.** The threshold is our assumption. We say "possible pattern, worth investigating", never "violation".
+- **Nobody has been interviewed yet.** The original plan starts with 8 to 10 rider interviews. The hackathon build replaces that with cited reporting. Interviews are the first step after today.
+- **Location is ZIP-level at most; no diagnoses.** Today's build collects neither.
 
-## What we are not building
+## Who it is for
 
-- Live bus tracking.
-- Real bookings for vanpools or shuttles. The backup options are information and links.
-- A job board. No open Michigan job-listings feed was found, so the user enters the job's address and shift, or picks from a small list of sample jobs.
-
-## How this differs from what exists
-
-The Transit app and Google Maps plan one trip at a time. LinkedIn shows a commute estimate on job listings. In about a dozen searches, the research found no tool that checks both directions against a specific shift, returns a verdict, and adds fallbacks. Say "we found no tool that does this," not "none exists."
-
-## Michigan impact
-
-The hackathon scores "keeping value, jobs and opportunity in Michigan." The case: workers reach jobs at Michigan plants and warehouses that they would otherwise turn down or lose, and Michigan employers fill shifts they cannot staff now.
-
-Proposed framing, not yet agreed by the team: build and demo for one Detroit worker, and describe the reach as any Michigan worker without reliable transportation. The workforce survey above covers all 16 regions of the state, and Grand Rapids, Ann Arbor and Flint publish the same kind of open schedule data as Detroit, so adding a city means loading another feed.
-
-## Draft problem statement
-
-Draft only. The team has not agreed on this sentence, and the workbook asks for one.
-
-> A Detroit worker without a car struggles to know whether a job's shift is reachable by bus in both directions, because trip planners answer one trip at a time and not the trip home after a late shift, which costs them jobs they turn down needlessly or accept and then lose.
+Built and demoed for one rider, Denise. The benefit reaches riders and caregivers across Michigan, and the advocates who speak for them: Disability Rights Michigan, Transportation Riders United, Warriors on Wheels of Metro Detroit and the Disability Network centers. None of them has seen it yet.

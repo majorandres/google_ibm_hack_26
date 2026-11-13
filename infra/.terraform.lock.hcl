@@ -1,16 +1,22 @@
 # This file is maintained automatically by "terraform init".
 # Manual edits may be lost in future updates.
 
-provider "registry.terraform.io/ibm-cloud/ibm" {
-  version     = "1.89.0"
-  constraints = "~> 1.70"
+provider "registry.terraform.io/hashicorp/google" {
+  version     = "6.50.0"
+  constraints = "~> 6.0"
   hashes = [
-    "h1:wEc+vJeYRWqTPOMzDXIUeRYqaMfulhV+HlOBrITcs0U=",
-    "zh:05a524e828b1aef1527551f6744fcb6d76a9ed89c20affe29cd96cc93a3abb8d",
-    "zh:3e065f5f011b3e15a582639a481848543aa63b0e817161384994a484e7b8707a",
-    "zh:5df84c531de5ff3745b4fcd3108639879c4807ee26b4b83848200efca1b5ea78",
-    "zh:71a30eeb5f915849fb7846c68a67e6c292ded0535e1c585fb885c55cf5468142",
-    "zh:724a5d1287914d58c866ff71a3d699c90a7d1076a0c07141877f7bcdf08d13e4",
-    "zh:d3841cfbcdd881ffd1c2001ee97ebf0c2115f3a9ad67320871a120c2ed222798",
+    "h1:DNt2+WSTnrNlWVUml87IQb+f/aICd3TKETxWIJAELyA=",
+    "zh:1f3513fcfcbf7ca53d667a168c5067a4dd91a4d4cccd19743e248ff31065503c",
+    "zh:3da7db8fc2c51a77dd958ea8baaa05c29cd7f829bd8941c26e2ea9cb3aadc1e5",
+    "zh:3e09ac3f6ca8111cbb659d38c251771829f4347ab159a12db195e211c76068bb",
+    "zh:7bb9e41c568df15ccf1a8946037355eefb4dfb4e35e3b190808bb7c4abae547d",
+    "zh:81e5d78bdec7778e6d67b5c3544777505db40a826b6eb5abe9b86d4ba396866b",
+    "zh:8d309d020fb321525883f5c4ea864df3d5942b6087f6656d6d8b3a1377f340fc",
+    "zh:93e112559655ab95a523193158f4a4ac0f2bfed7eeaa712010b85ebb551d5071",
+    "zh:d3efe589ffd625b300cef5917c4629513f77e3a7b111c9df65075f76a46a63c7",
+    "zh:d4a4d672bbef756a870d8f32b35925f8ce2ef4f6bbd5b71a3cb764f1b6c85421",
+    "zh:e13a86bca299ba8a118e80d5f84fbdd708fe600ecdceea1a13d4919c068379fe",
+    "zh:f569b65999264a9416862bca5cd2a6177d94ccb0424f3a4ef424428912b9cb3c",
+    "zh:fec30c095647b583a246c39d557704947195a1b7d41f81e369ba377d997faef6",
   ]
 }

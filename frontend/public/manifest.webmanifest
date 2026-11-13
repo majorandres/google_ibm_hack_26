@@ -1,0 +1,10 @@
+{
+  "name": "RideRecord",
+  "short_name": "RideRecord",
+  "description": "Log paratransit and Medicaid rides, draft complaints, and see reliability patterns.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e40af",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
