@@ -29,8 +29,8 @@ def _json_part(text: str) -> str:
 
 
 # Same words on the same day get the same answer (temperature 0), so one rehearsal makes the demo
-# sentences instant and the live demo does not wait on watsonx (plan §10). Errors are not stored.
-_answers: dict[tuple[str, date], Extraction | None] = {}
+# sentences instant and the live demo does not wait on watsonx (plan §10). Only usable answers are kept.
+_answers: dict[tuple[str, date], Extraction] = {}
 MAX_ANSWERS = 500  # shortcut: per instance, cleared when full; use a real cache if traffic grows
 
 
@@ -38,11 +38,14 @@ def extract(transcript: str) -> Extraction | None:
     """None means Granite's answer failed validation: fall back to the manual form."""
     # Speech to Text and typing differ in case and punctuation, not in words.
     key = (" ".join(re.findall(r"\w+", transcript.lower())), clock.today())
-    if key not in _answers:
+    if key in _answers:
+        return _answers[key]
+    found = _ask(transcript)
+    if found is not None:  # an unusable answer is not kept, so the next try asks Granite again
         if len(_answers) >= MAX_ANSWERS:
             _answers.clear()
-        _answers[key] = _ask(transcript)
-    return _answers[key]
+        _answers[key] = found
+    return found
 
 
 def _ask(transcript: str) -> Extraction | None:

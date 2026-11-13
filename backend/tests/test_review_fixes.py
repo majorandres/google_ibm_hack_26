@@ -189,3 +189,11 @@ def test_the_same_sentence_asks_granite_only_once(client, monkeypatch):  # noqa:
     incidents = [client.post("/api/extract", json={"transcript": s}).json()["incident"] for s in said]
     assert len(prompts) == 2
     assert incidents[0] == incidents[1]
+
+
+def test_an_unusable_answer_is_not_kept_so_the_next_try_asks_again(client, monkeypatch):  # noqa: F811
+    answers = iter(["Sorry, I can't help with that.", _granite_says(None)])
+    monkeypatch.setattr(granite, "chat", lambda prompt: next(answers))
+    ask = lambda: client.post("/api/extract", json={"transcript": "my ride never came"}).json()["incident"]
+    assert ask() is None  # first answer was not JSON: manual form
+    assert ask() is not None  # a rehearsal miss must not stick for the rest of the day
