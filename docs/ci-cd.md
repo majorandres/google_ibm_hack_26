@@ -5,9 +5,11 @@ Two GitHub Actions workflows live in `.github/workflows/`:
 | Workflow | File | Runs on | What it does |
 |---|---|---|---|
 | **CI** | `ci.yml` | Every pull request, manual run, and as the first stage of every deploy | Lints, tests and builds every part of the repo. Deploys nothing and needs no secrets. |
-| **Deploy** | `deploy.yml` | Every push to `main`, manual run | Runs CI, then builds the Docker image, pushes it to IBM Container Registry and points the Code Engine app at it. |
+| **Deploy** | `deploy.yml` | Every push to `main` that changes more than docs (`docs/**`, `*.md`), manual run | Runs CI, then builds the Docker image, pushes it to IBM Container Registry and points the Code Engine app at it. |
 
 A push to `main` does not run `ci.yml` on its own. `deploy.yml` calls it, so each commit on `main` is checked once, and the deploy only happens if every CI job passes.
+
+A push to `main` that only changes Markdown files or `docs/` runs neither workflow. Deploys run one at a time, so this keeps a docs edit from holding up a code fix pushed right after it. A push that changes any other file still deploys everything. To deploy after a docs-only push anyway, start **Deploy** by hand from the Actions tab.
 
 ## CI (`ci.yml`)
 

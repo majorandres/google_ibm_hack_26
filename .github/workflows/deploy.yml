@@ -10,6 +10,11 @@ name: Deploy
 on:
   push:
     branches: [main]
+    # A push that only touches docs does not deploy, so it cannot hold up a
+    # code fix queued behind it. A push with any other file still deploys.
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
   workflow_dispatch:
 
 permissions:
