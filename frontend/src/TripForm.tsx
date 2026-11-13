@@ -101,46 +101,56 @@ export default function TripForm(props: {
       </fieldset>
 
       {draft.incident_type === 'late_pickup' && (
-        <label className="block text-xl font-semibold">
-          How many minutes late? (optional)
+        <div>
+          <label htmlFor="trip-minutes-late" className="label">
+            How many minutes late? (optional)
+          </label>
           <input
+            id="trip-minutes-late"
             type="number"
             inputMode="numeric"
             min={0}
             max={1440}
             value={draft.minutes_late}
             onChange={(e) => set({ minutes_late: e.target.value })}
-            className={`${input} mt-2 font-normal`}
+            className={input}
           />
-        </label>
+        </div>
       )}
 
-      <label className="block text-xl font-semibold">
-        What day was the ride?
+      <div>
+        <label htmlFor="trip-date" className="label">
+          What day was the ride?
+        </label>
         <input
+          id="trip-date"
           type="date"
           max={today()}
           value={draft.trip_date}
           onChange={(e) => set({ trip_date: e.target.value })}
-          className={`${input} mt-2 font-normal`}
+          className={input}
         />
-      </label>
+      </div>
 
-      <label className="block text-xl font-semibold">
-        Anything to add? (optional)
+      <div>
+        <label htmlFor="trip-notes" className="label">
+          Anything to add? (optional)
+        </label>
         <textarea
+          id="trip-notes"
           rows={2}
           maxLength={MAX_TEXT}
           value={draft.notes}
           onChange={(e) => set({ notes: e.target.value })}
-          className={`${input} mt-2 font-normal`}
+          aria-describedby="trip-notes-hint"
+          className={input}
         />
-        <span className="mt-1 block text-base font-normal text-slate-700">
+        <p id="trip-notes-hint" className="hint">
           Please leave out street addresses and medical details.
-        </span>
-      </label>
+        </p>
+      </div>
 
-      <button type="submit" disabled={saving} className={`${button} w-full`}>
+      <button type="submit" disabled={saving} className={`${button} btn-block`}>
         {saving ? 'Saving…' : 'Save this ride'}
       </button>
       <Status error={status.error}>{status.text}</Status>

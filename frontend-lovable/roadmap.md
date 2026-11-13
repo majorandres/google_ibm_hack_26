@@ -1,0 +1,2 @@
+- [x] Match app tabs to the landing's light royal-blue and yellow visual style.
+- [x] Verify tab navigation and mobile layout without altering the expected unavailable API.
