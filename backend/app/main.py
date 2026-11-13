@@ -2,7 +2,7 @@ import logging
 import time
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
 
@@ -11,7 +11,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.staticfiles import StaticFiles
 
-from app import complaints, extract, seed, speech, stats, store
+from app import clock, complaints, extract, seed, speech, stats, store
 from app.config import get_settings
 from app.models import ComplaintRequest, ExtractRequest, Trip, TripIn
 
@@ -50,7 +50,7 @@ def seed_demo() -> None:
     """Give the demo rider a short history so the complaint builder has something to select."""
     if store.by_rider(DEMO_RIDER):
         return
-    today = date.today()
+    today = clock.today()
     for days_ago, direction, incident, minutes, notes in [
         (18, "return", "no_show", None, "Return ride from the clinic never came."),
         (9, "outbound", "late_pickup", 45, None),
@@ -175,7 +175,7 @@ def draft_complaint(body: ComplaintRequest) -> dict:
     return {
         "channel": channel,
         "escalation": routing["escalation"],
-        "days_left": complaints.days_left(channel, trips, date.today()),
+        "days_left": complaints.days_left(channel, trips, clock.today()),
         "draft": letter,
         "drafted_by": drafted_by,
         "model": get_settings().watsonx_model_id if drafted_by == "granite" else None,

@@ -1,10 +1,8 @@
 """Granite turns a rider's spoken description into a structured incident."""
 
-from datetime import date
-
 from pydantic import ValidationError
 
-from app import granite, seed
+from app import clock, granite, seed
 from app.models import Extraction
 
 PROMPT = """You extract paratransit ride incidents from a rider's spoken description.
@@ -33,7 +31,7 @@ def extract(transcript: str) -> Extraction | None:
     No retry: chat() runs at temperature 0, so asking again gives the same answer.
     """
     prompt = (
-        PROMPT.replace("<TODAY>", f"{date.today():%A %Y-%m-%d}")
+        PROMPT.replace("<TODAY>", f"{clock.today():%A %Y-%m-%d}")
         .replace("<PROVIDERS>", ", ".join(seed.short_name(p) for p in seed.providers()))
         .replace("<TRANSCRIPT>", transcript.replace('"', "'"))
     )

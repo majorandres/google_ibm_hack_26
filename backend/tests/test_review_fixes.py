@@ -1,9 +1,9 @@
 """Regression tests for the findings of the whole-branch review and the PR review."""
 
 import json
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 
-from app import granite, main, seed, stats
+from app import clock, granite, main, seed, stats
 from app.config import Settings
 from app.models import MAX_TEXT
 from tests.test_api import client, complain, post_trip, problem_trip_ids, row  # noqa: F401
@@ -115,17 +115,17 @@ def _granite_says(date_mentioned):
 
 def test_extract_keeps_a_resolved_past_date_and_drops_anything_else(client, monkeypatch):  # noqa: F811
     prompts = []
-    three_days_ago = str(date.today() - timedelta(days=3))
+    three_days_ago = str(clock.today() - timedelta(days=3))
     for said, kept in [
         (three_days_ago, three_days_ago),
         ("last Tuesday", None),
-        (str(date.today() + timedelta(days=1)), None),
+        (str(clock.today() + timedelta(days=1)), None),
         (None, None),
     ]:
         monkeypatch.setattr(granite, "chat", lambda prompt, said=said: prompts.append(prompt) or _granite_says(said))
         incident = client.post("/api/extract", json={"transcript": "it never came"}).json()["incident"]
         assert incident["date_mentioned"] == kept
-    assert date.today().isoformat() in prompts[0]  # Granite needs today to resolve "yesterday"
+    assert clock.today().isoformat() in prompts[0]  # Granite needs today to resolve "yesterday"
 
 
 def test_a_typed_description_fits_in_the_notes_it_prefills(client):  # noqa: F811
@@ -146,3 +146,30 @@ def test_paid_endpoints_are_rate_limited_per_caller(client, monkeypatch):  # noq
     )
     assert [ask("1.1.1.1").status_code for _ in range(3)] == [200, 200, 429]
     assert ask("2.2.2.2").status_code == 200  # the last X-Forwarded-For entry is the caller
+
+
+# --- Backend plan: the rider's calendar day, not the server's ---
+
+
+def test_today_is_the_michigan_day_not_the_utc_day(monkeypatch):
+    class LateEvening(datetime):
+        """10 PM in Detroit on March 1 is already March 2 in UTC, where Cloud Run runs."""
+
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2027, 3, 2, 3, 0, tzinfo=UTC).astimezone(tz)
+
+    monkeypatch.setattr(clock, "datetime", LateEvening, raising=False)
+    assert clock.today() == date(2027, 3, 1)
+
+
+def test_days_left_counts_from_the_michigan_day(client, monkeypatch):  # noqa: F811
+    monkeypatch.setattr(clock, "today", lambda: date(2027, 1, 1))
+    trip = post_trip(client, rider_id="r4", incident_type="no_show", trip_date="2026-12-31")
+    body = complain(client, [trip.json()["id"]], rider_id="r4").json()
+    assert body["days_left"] == 179
+
+
+def test_a_ride_cannot_be_logged_for_a_future_day(client):  # noqa: F811
+    tomorrow = str(clock.today() + timedelta(days=1))
+    assert post_trip(client, trip_date=tomorrow).status_code == 422
