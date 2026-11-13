@@ -25,7 +25,32 @@ A shift-aware commute check for the Michigan DevFest AI Hackathon 2026 (Mobility
 - **Problem research.** Five lines of research were combined into one report (`google-doc/02-research-report.md`). Its conclusion is that getting to work without a car in Metro Detroit is the strongest problem for this team.
 - **Business model canvas.** Filled in for the commute check (`google-doc/04-business-model-canvas.md`). Revenue streams and partners are assumptions, not validated.
 - **Screen mockup.** Four screens (check a job, verdict, backup plan, employer view) on a design canvas outside this repo: https://claude.ai/artifact/5b4XhRDYymMx57VXg4EkXb. The link is private to its owner unless shared. Bus times, margins and applicant counts in it are sample data.
-- **Repo created.** `google_ibm_hack_26` on GitHub, with a README and these docs. No application code yet.
+- **Repo created.** `google_ibm_hack_26` on GitHub, with a README and these docs.
+- **IBM Cloud access checked** (November 13, about 12:15 PM ET). The hackathon account (`watsonx`) has one resource group, `Default`, on which the team has Viewer only. New service instances cannot be created; work goes into the pre-provisioned ones:
+
+  | Instance | Region | Access |
+  |---|---|---|
+  | Code Engine | us-south | Manager: can deploy apps into the existing project |
+  | watsonx.ai (WML / Studio) | us-south | Writer: can call models |
+  | Cloudant | us-south | Administrator |
+  | Object Storage | global | Administrator |
+  | Speech to Text / Text to Speech | us-south | Writer |
+  | watsonx Orchestrate | ca-tor | Writer |
+  | watsonx.governance | us-south | Was still provisioning |
+  | Container Registry | — | Manager |
+
+  The only Granite chat model enabled in us-south is `ibm/granite-4-h-small`. No Granite Guardian model is listed. The account has one watsonx project.
+- **Repo scaffolded for development.** Run instructions are in the root `README.md`. This is scaffolding only; none of the product features exist yet.
+  - `backend/`: FastAPI on Python 3.12, managed with uv. Has `/api/health` and `/api/granite/ask`, a smoke-test endpoint for Granite through the watsonx Python SDK.
+  - `frontend/`: React, TypeScript and Tailwind on Vite. A placeholder page that shows backend status.
+  - `infra/`: Terraform for IBM Cloud. Creates a Container Registry namespace, two Code Engine secrets and one Code Engine app inside the existing project.
+  - `Dockerfile`: one image in which FastAPI serves both the API and the built frontend, so there is a single app to deploy.
+  - `scripts/deploy.sh`: builds and pushes the image, then applies Terraform.
+  - Checked: backend tests and lint pass, the frontend builds, `terraform validate` succeeds.
+
+### Decided
+
+- **Tech stack.** Python (FastAPI) backend, React front end, IBM Granite through the watsonx Python SDK, hosted on IBM Code Engine with infrastructure in Terraform. Google Cloud Run and Lovable, which `google-doc/03-tech-resources.md` leaned toward, are not used. watsonx Orchestrate is not used.
 
 ### Deadline
 
@@ -33,7 +58,7 @@ Submissions close at **6:00 PM ET on November 13, 2026**, with pitches at 6:30 P
 
 ### Not decided yet
 
-- **Tech stack.** The workbook's "Our stack" section is empty. `google-doc/03-tech-resources.md` leans toward a Lovable front end (React, TypeScript, Tailwind, shadcn/ui), a Python API on Google Cloud Run, and IBM Granite through the watsonx Python SDK, and advises skipping watsonx Orchestrate unless several agents are needed. None of this is a decision.
+- **Which Google tool the product uses.** The stack above has no Google component yet. Google's transit routing is the candidate; the backend has an optional `GOOGLE_MAPS_API_KEY` setting for it. The workbook's "Our stack" section is still empty.
 - **Product name.** The mockup uses "Commute Check" as a placeholder.
 - **Who the pitch says it is for.** Proposed, not agreed: build and demo for one Detroit worker, and describe the benefit as reaching any Michigan worker without reliable transportation. See `why-we-are-building-this.md`.
 - **Workbook answers.** The problem statement, value proposition, Design for AI answers, team roles, judging map, build plan, video script and pitch in the workbook have not been written for the commute check.
@@ -43,7 +68,8 @@ Submissions close at **6:00 PM ET on November 13, 2026**, with pitches at 6:30 P
 These came out of the research as open risks. Check each one before building on it.
 
 - Whether Google's transit routing returns DDOT and SMART trips late at night (for example, leaving a plant at 11:30 PM). Nobody has run a test query.
-- Which IBM Granite model IDs the team's hackathon account has enabled.
+- Whether the deploy works end to end. The Docker image has not been built and nothing has been deployed. The first run of `scripts/deploy.sh` will show whether the team's role can create a Container Registry namespace.
+- Whether a live call to Granite succeeds. It needs an IBM Cloud API key in `.env`, which had not been created when this was written.
 - The current DDOT on-time figures. The research had January 2026 numbers only.
 
 ## Rules that apply to this repo
@@ -52,7 +78,7 @@ From the organizers' workbook and keynote:
 
 - The repo must be public for submission. Never commit API keys or other secrets. Use environment variables.
 - Use only data the team is allowed to use. No personal, client, confidential or social media data. Keep a list of every public data source.
-- Record which AI tools and models were used, including coding assistants. Judges ask. So far: the research, the canvas, the mockup and these docs were produced with Claude.
+- Record which AI tools and models were used, including coding assistants. Judges ask. So far: the research, the canvas, the mockup, these docs and the repo scaffolding were produced with Claude.
 - Hackathon cloud accounts close after the event. Push code to GitHub before then.
 
 ## Judging
