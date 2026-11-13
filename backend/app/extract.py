@@ -20,7 +20,8 @@ What each incident type means:
 - late_pickup: the vehicle came, but late.
 - no_show: a booked ride never arrived.
 - trip_denied: the rider asked to book a ride and was refused or told none was available.
-- excessive_length: the ride itself took far too long.
+- excessive_length: the rider was in the vehicle far too long. Waiting for a late ride or one
+  that never came is late_pickup or no_show, never excessive_length.
 - long_hold: the rider waited on hold on the phone to book.
 - wrong_vehicle: the vehicle sent could not carry the rider (for example, no room for a wheelchair).
 - driver_conduct: the driver was rude, unsafe, or did not secure the rider or wheelchair.
