@@ -3,14 +3,14 @@ import { api, type StatRow, type Stats } from './api'
 import { Status } from './ui'
 
 const percent = (rate: number) => `${(rate * 100).toFixed(1)}%`
-const cell = 'border-b border-slate-300 px-3 py-2 text-left'
+const cell = 'border-b border-app-line px-3 py-2 text-left'
 
 /** The bar is decoration; the number beside it and the table carry the data. */
 function Rate({ row, max }: { row: StatRow; max: number }) {
   return (
     <span className="flex items-center gap-2">
       <span className="w-14 tabular-nums">{percent(row.rate)}</span>
-      <span aria-hidden="true" className="h-3 rounded bg-blue-800" style={{ width: `${(row.rate / max) * 8}rem` }} />
+      <span aria-hidden="true" className="h-3 rounded bg-brand" style={{ width: `${(row.rate / max) * 8}rem` }} />
     </span>
   )
 }
@@ -30,7 +30,7 @@ export default function Dashboard() {
   const flagged = stats.by_provider_month.filter((r) => r.flagged)
   return (
     <div className="space-y-6">
-      <p className="rounded-lg border-2 border-amber-700 bg-amber-100 p-3 text-lg font-semibold">
+      <p className="rounded-lg border border-pending bg-brand-highlight/20 p-3 text-lg font-semibold">
         Demo data, not real riders. These providers are made up. Nothing here describes a real agency.
       </p>
 
@@ -53,7 +53,7 @@ export default function Dashboard() {
             ))}
           </ul>
         )}
-        <p className="mt-2 text-base text-slate-700">
+        <p className="mt-2 text-base text-app-muted">
           How we flag: at least {stats.min_trips} logged trips in a month, and {percent(stats.threshold)} or more of them more than{' '}
           {stats.late_minutes} minutes late, a no-show, or denied. Federal rule 49 CFR 37.131(f) bans patterns of “substantial numbers”
           of these but does not define “substantial”, so this threshold is our assumption for the demo. A flag is not a finding of a
@@ -89,7 +89,7 @@ export default function Dashboard() {
         <h2 id="table-heading" className="text-2xl font-semibold">
           By provider and month
         </h2>
-        <div className="overflow-x-auto focus-visible:outline-4 focus-visible:outline-amber-700" tabIndex={0} role="region" aria-labelledby="table-heading">
+        <div className="overflow-x-auto focus-visible:outline-4 focus-visible:outline-brand" tabIndex={0} role="region" aria-labelledby="table-heading">
           <table className="w-full text-lg">
             <thead>
               <tr>
@@ -102,7 +102,7 @@ export default function Dashboard() {
             </thead>
             <tbody>
               {stats.by_provider_month.map((r) => (
-                <tr key={r.provider_name + r.month} className={r.flagged ? 'bg-amber-100 font-semibold' : ''}>
+                <tr key={r.provider_name + r.month} className={r.flagged ? 'bg-brand-highlight/20 font-semibold' : ''}>
                   <th scope="row" className={`${cell} font-normal`}>{r.provider_name}</th>
                   <td className={cell}>{r.month}</td>
                   <td className={cell}>{r.trips}</td>
@@ -113,7 +113,7 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-base text-slate-700">Source: synthetic trips, aggregated in {stats.source === 'bigquery' ? 'Google BigQuery' : 'a local CSV file'}.</p>
+        <p className="mt-2 text-base text-app-muted">Source: synthetic trips, aggregated in {stats.source === 'bigquery' ? 'Google BigQuery' : 'a local CSV file'}.</p>
       </section>
     </div>
   )

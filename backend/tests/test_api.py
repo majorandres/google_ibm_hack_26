@@ -60,6 +60,22 @@ def test_log_trip_then_see_it_in_history(client):
     assert len(trips) == 1 and trips[0]["minutes_late"] == 40
 
 
+def test_history_says_where_a_problem_ride_would_be_filed_and_by_when(client):
+    filing = {t["incident_type"]: t["filing"] for t in history(client)}
+    assert filing[None] is None  # a fine ride has nothing to file
+    assert filing["no_show"] == {
+        "office": "DDOT ADA Coordinator, Compliance Division",
+        "deadline_days": 180,
+        "days_left": 162,  # seeded 18 days ago
+    }
+
+
+def test_history_has_no_days_left_for_an_unverified_channel(client):
+    post_trip(client, rider_id="r2", provider_id="modivcare-mi", incident_type="no_show")
+    (trip,) = history(client, rider_id="r2")
+    assert trip["filing"]["days_left"] is None
+
+
 def test_log_trip_rejects_unknown_provider(client):
     assert post_trip(client, provider_id="nope").status_code == 422
 

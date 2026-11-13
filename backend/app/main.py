@@ -2,7 +2,7 @@ import logging
 import time
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
 
@@ -109,7 +109,21 @@ def log_trip(trip: TripIn) -> dict:
 
 @app.get("/api/trips")
 def list_trips(rider_id: str) -> list[dict]:
-    return store.by_rider(rider_id)
+    today = clock.today()
+    return [{**t, "filing": _filing(t, today)} for t in store.by_rider(rider_id)]
+
+
+def _filing(trip: dict, today: date) -> dict | None:
+    """For a problem ride: the office a complaint would go to and the days left to file it."""
+    provider = trip["incident_type"] and seed.provider(trip["provider_id"])
+    channel = provider and seed.channel(provider.get("complaint_channel_id"))
+    if not channel:
+        return None
+    return {
+        "office": channel["name"],
+        "deadline_days": channel.get("deadline_days"),
+        "days_left": complaints.days_left(channel, [trip], today),
+    }
 
 
 def _extract(transcript: str) -> dict:
