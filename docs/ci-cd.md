@@ -29,7 +29,7 @@ Runs in `frontend/`.
 
 1. **Check out** the repo.
 2. **Set up Node 22** with an npm cache keyed on `package-lock.json`.
-3. **`npm ci`** installs the exact versions in `package-lock.json`. Fails if the lockfile is out of sync with `package.json`; fix that with `npm install` and commit the lockfile.
+3. **`npm ci`** installs the exact versions in `package-lock.json`. Fails if the lockfile is out of sync with `package.json`. CI and the Dockerfile use Node 22, which ships npm 10. npm 10 also wants Linux-only optional packages (`@emnapi/*`) in the lockfile, and a newer npm on Windows can leave them out. After changing dependencies, refresh the lockfile with `npx npm@10 install --package-lock-only` in `frontend/` and commit it.
 4. **`npm run lint`** runs oxlint.
 5. **`npm run build`** type-checks with `tsc -b` and builds with Vite. A type error fails here.
 

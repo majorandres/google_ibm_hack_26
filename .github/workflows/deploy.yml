@@ -78,7 +78,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Install IBM Cloud CLI and log in
-        uses: IBM/actions-ibmcloud-cli@v2
+        uses: IBM/actions-ibmcloud-cli@v2.2.1
         with:
           api_key: ${{ secrets.IBMCLOUD_API_KEY }}
           region: ${{ env.REGION }}
