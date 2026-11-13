@@ -1,9 +1,9 @@
 """Regression tests for the findings of the whole-branch review and the PR review."""
 
 import json
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 
-from app import granite, main, seed, stats
+from app import clock, granite, main, seed, stats
 from app.config import Settings
 from app.models import MAX_TEXT
 from tests.test_api import client, complain, post_trip, problem_trip_ids, row  # noqa: F401
@@ -115,17 +115,17 @@ def _granite_says(date_mentioned):
 
 def test_extract_keeps_a_resolved_past_date_and_drops_anything_else(client, monkeypatch):  # noqa: F811
     prompts = []
-    three_days_ago = str(date.today() - timedelta(days=3))
+    three_days_ago = str(clock.today() - timedelta(days=3))
     for said, kept in [
         (three_days_ago, three_days_ago),
         ("last Tuesday", None),
-        (str(date.today() + timedelta(days=1)), None),
+        (str(clock.today() + timedelta(days=1)), None),
         (None, None),
     ]:
         monkeypatch.setattr(granite, "chat", lambda prompt, said=said: prompts.append(prompt) or _granite_says(said))
-        incident = client.post("/api/extract", json={"transcript": "it never came"}).json()["incident"]
+        incident = client.post("/api/extract", json={"transcript": f"it never came ({said})"}).json()["incident"]
         assert incident["date_mentioned"] == kept
-    assert date.today().isoformat() in prompts[0]  # Granite needs today to resolve "yesterday"
+    assert clock.today().isoformat() in prompts[0]  # Granite needs today to resolve "yesterday"
 
 
 def test_a_typed_description_fits_in_the_notes_it_prefills(client):  # noqa: F811
@@ -146,3 +146,96 @@ def test_paid_endpoints_are_rate_limited_per_caller(client, monkeypatch):  # noq
     )
     assert [ask("1.1.1.1").status_code for _ in range(3)] == [200, 200, 429]
     assert ask("2.2.2.2").status_code == 200  # the last X-Forwarded-For entry is the caller
+
+
+# --- Backend plan: the rider's calendar day, not the server's ---
+
+
+def test_today_is_the_michigan_day_not_the_utc_day(monkeypatch):
+    class LateEvening(datetime):
+        """10 PM in Detroit on March 1 is already March 2 in UTC, where Cloud Run runs."""
+
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2027, 3, 2, 3, 0, tzinfo=UTC).astimezone(tz)
+
+    monkeypatch.setattr(clock, "datetime", LateEvening, raising=False)
+    assert clock.today() == date(2027, 3, 1)
+
+
+def test_days_left_counts_from_the_michigan_day(client, monkeypatch):  # noqa: F811
+    monkeypatch.setattr(clock, "today", lambda: date(2027, 1, 1))
+    trip = post_trip(client, rider_id="r4", incident_type="no_show", trip_date="2026-12-31")
+    body = complain(client, [trip.json()["id"]], rider_id="r4").json()
+    assert body["days_left"] == 179
+
+
+def test_a_ride_cannot_be_logged_for_a_future_day(client):  # noqa: F811
+    tomorrow = str(clock.today() + timedelta(days=1))
+    assert post_trip(client, trip_date=tomorrow).status_code == 422
+
+
+# --- Backend plan §10: cache extraction answers so the demo does not wait on watsonx ---
+
+
+def test_the_same_sentence_asks_granite_only_once(client, monkeypatch):  # noqa: F811
+    prompts = []
+    monkeypatch.setattr(granite, "chat", lambda prompt: prompts.append(prompt) or _granite_says(None))
+    said = [
+        "My return ride from Henry Ford never came.",
+        "my return ride from henry ford never came",  # Speech to Text drops case and punctuation
+        "My return ride never came.",
+    ]
+    incidents = [client.post("/api/extract", json={"transcript": s}).json()["incident"] for s in said]
+    assert len(prompts) == 2
+    assert incidents[0] == incidents[1]
+
+
+def test_an_unusable_answer_is_not_kept_so_the_next_try_asks_again(client, monkeypatch):  # noqa: F811
+    answers = iter(["Sorry, I can't help with that.", _granite_says(None)])
+    monkeypatch.setattr(granite, "chat", lambda prompt: next(answers))
+    ask = lambda: client.post("/api/extract", json={"transcript": "my ride never came"}).json()["incident"]
+    assert ask() is None  # first answer was not JSON: manual form
+    assert ask() is not None  # a rehearsal miss must not stick for the rest of the day
+
+
+# --- Live Granite run, 2026-11-13: guards for what the prompt alone did not stop ---
+
+
+def _granite_names(provider):
+    answer = json.loads(_granite_says(None))
+    return json.dumps({**answer, "provider": provider})
+
+
+def test_a_provider_the_rider_never_named_is_dropped(client, monkeypatch):  # noqa: F811
+    # Live, Granite answered "DDOT Paratransit" for a sentence that names no provider.
+    monkeypatch.setattr(granite, "chat", lambda prompt: _granite_names("DDOT Paratransit"))
+    ask = lambda said: client.post("/api/extract", json={"transcript": said}).json()["incident"]
+    assert ask("My return ride from Henry Ford never came.")["provider_id"] is None
+    assert ask("My DDOT Paratransit return ride never came.")["provider_id"] == "ddot-paratransit"
+    # "DDOT" alone could be DDOT Now: Granite's pick between the two is still a guess.
+    assert ask("My DDOT return ride never came.")["provider_id"] is None
+
+
+def test_a_provider_name_speech_to_text_split_in_two_is_kept(client, monkeypatch):  # noqa: F811
+    monkeypatch.setattr(granite, "chat", lambda prompt: _granite_names("SafeRide"))
+    ask = lambda said: client.post("/api/extract", json={"transcript": said}).json()["incident"]
+    assert ask("safe ride never came for me")["provider_id"] == "saferide-mi"
+    monkeypatch.setattr(granite, "chat", lambda prompt: _granite_names(" "))
+    assert ask("my ride never came")["provider_id"] is None  # a blank provider must not lose the incident
+
+
+def test_brackets_the_rider_wrote_and_a_capital_signature_are_not_placeholders(client, monkeypatch):  # noqa: F811
+    trip = post_trip(client, incident_type="driver_conduct", notes="Driver [name unknown] yelled at me.")
+    letter = "To: DDOT\n\n- Driver [name unknown] yelled at me.\n\n[Rider Signature]"
+    monkeypatch.setattr(granite, "chat", lambda prompt: letter)
+    assert complain(client, [trip.json()["id"]]).json()["drafted_by"] == "granite"
+
+
+def test_a_letter_with_fill_in_placeholders_falls_back_to_the_template(client, monkeypatch):  # noqa: F811
+    # Live, Granite opened with "[Your Name]", "[Your Address]", "[Phone Number]" lines.
+    letter = "[Your Name]\n[Your Address]\n\nDear DDOT,\nMy rides were late.\n\n[Rider signature]"
+    monkeypatch.setattr(granite, "chat", lambda prompt: letter)
+    body = complain(client, problem_trip_ids(client)).json()
+    assert body["drafted_by"] == "template"
+    assert "[Your" not in body["draft"]

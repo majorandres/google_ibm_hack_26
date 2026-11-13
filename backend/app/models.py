@@ -3,6 +3,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+from app import clock
+
 MAX_TEXT = 2000  # a typed description becomes the trip notes, so both share one limit
 
 Direction = Literal["outbound", "return"]
@@ -26,8 +28,16 @@ class TripIn(BaseModel):
     incident_type: IncidentType | None = None  # None = the ride was fine
     minutes_late: int | None = Field(None, ge=0, le=1440)
     notes: str | None = Field(None, max_length=MAX_TEXT)
-    trip_date: date = Field(default_factory=date.today)
+    trip_date: date = Field(default_factory=lambda: clock.today())
     logged_via: Literal["tap", "voice", "caregiver"] = "tap"
+
+    @field_validator("trip_date")
+    @classmethod
+    def _not_in_the_future(cls, day: date) -> date:
+        # A future date would push the filing deadline past the real 180 days.
+        if day > clock.today():
+            raise ValueError("The ride date cannot be in the future.")
+        return day
 
 
 class Trip(TripIn):
@@ -56,7 +66,7 @@ class Extraction(BaseModel):
             day = date.fromisoformat(value)  # type: ignore[arg-type]
         except (TypeError, ValueError):
             return None
-        return day if day <= date.today() else None
+        return day if day <= clock.today() else None
 
 
 class ExtractRequest(BaseModel):

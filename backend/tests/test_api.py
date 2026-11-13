@@ -5,7 +5,7 @@ from datetime import date, timedelta
 import pytest
 from fastapi.testclient import TestClient
 
-from app import complaints, granite, main, stats, store
+from app import complaints, extract, granite, main, stats, store
 from app.config import REPO_ROOT, Settings
 from app.main import DEMO_RIDER, app
 
@@ -19,6 +19,7 @@ def client(monkeypatch):
     monkeypatch.setattr("app.speech.get_settings", lambda: settings)
     granite._model.cache_clear()
     store._mem.clear()
+    extract._answers.clear()
     main._paid_calls.clear()
     with TestClient(app) as c:  # the context manager runs lifespan, which seeds the demo rider
         yield c
@@ -70,7 +71,7 @@ def test_extract_reads_fenced_json_and_maps_the_provider(client, monkeypatch):
         '"summary": "The return ride never came."}\n```'
     )
     monkeypatch.setattr(granite, "chat", lambda prompt: answer)
-    body = client.post("/api/extract", json={"transcript": "my ride never came"}).json()
+    body = client.post("/api/extract", json={"transcript": "my DDOT Paratransit ride never came"}).json()
     assert body["incident"]["provider_id"] == "ddot-paratransit"
     assert body["incident"]["incident_types"] == ["no_show"]
 
