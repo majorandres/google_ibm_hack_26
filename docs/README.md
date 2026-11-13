@@ -12,6 +12,7 @@ A shift-aware commute check for the Michigan DevFest AI Hackathon 2026 (Mobility
 
 | File | What it is |
 |---|---|
+| `hackathon-requirements.md` | Every hackathon rule, submission deliverable and judging criterion, with a check for each, so a person or an LLM can review the project against them. |
 | `why-we-are-building-this.md` | The reason for the project: the person, the problem, the evidence, what the product does and does not do. Start here. |
 | `google-doc/01-hackathon-workbook.md` | The organizers' team workbook. **Its filled-in answers are sample text about a different app ("BusPulse"), not ours.** See the warning at the top of that file. |
 | `google-doc/02-research-report.md` | Research on Michigan mobility problems, with sources, a comparison of candidate problems, the data and APIs available, and which statistics are safe to quote. |
