@@ -28,6 +28,9 @@ CASES = [
     # The demo sentence from plan §8.
     ("My return ride from Henry Ford never came. I waited an hour and forty minutes.",
      {"type": "no_show", "direction": "return"}),
+    # The same sentence as Speech to Text returns it from the demo .wav (no case, no punctuation).
+    ("my return ride from Henry Ford never came I waited an hour and forty minutes",
+     {"type": "no_show", "direction": "return"}),
     ("My return ride never came and I waited two hours.",
      {"type": "no_show", "direction": "return"}),
     ("DDOT Paratransit picked me up 45 minutes late this morning for my dialysis.",
@@ -55,8 +58,9 @@ def granite_is_configured():
         pytest.fail("RIDERECORD_LIVE is set but IBMCLOUD_API_KEY / WATSONX_PROJECT_ID are not (.env)")
 
 
-@pytest.mark.parametrize(("said", "expected"), CASES, ids=[f"t{i:02d}" for i in range(1, 11)])
+@pytest.mark.parametrize(("said", "expected"), CASES, ids=[f"t{i:02d}" for i in range(1, len(CASES) + 1)])
 def test_extraction(said, expected):
+    extract._answers.clear()  # t01 and t02 share a cache key; without this t02 never reaches Granite
     found = extract.extract(said)
     assert found is not None, "Granite's answer did not validate; the rider would get the manual form"
     got = {
@@ -68,6 +72,8 @@ def test_extraction(said, expected):
     }
     print(f"\n  {said}\n  -> {got} | {found.summary}")
     assert expected["type"] in got["type"]
+    if expected["type"] == "no_show":  # a ride that never came cannot have taken too long
+        assert "excessive_length" not in got["type"], "waiting for a no-show is not a long ride"
     for field in ("direction", "minutes_late", "date_mentioned"):
         if field in expected:
             assert got[field] == expected[field], field
