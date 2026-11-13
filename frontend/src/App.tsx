@@ -27,16 +27,18 @@ export default function App() {
     api.providers().then(setProviders).catch((e: Error) => setError(e.message))
   }, [])
 
-  const title = SCREENS.find((s) => s.id === screen)?.label ?? 'RideRecord'
+  const go = (id: ScreenId) => {
+    setScreen(id)
+    requestAnimationFrame(() => heading.current?.focus())
+  }
+
+  const title =SCREENS.find((s) => s.id === screen)?.label ?? 'RideRecord'
 
   const navigation = (
     <nav aria-label="Main" className="rr-navigation">
       {SCREENS.map((s) => (
         <button key={s.id} type="button"
-          onClick={() => {
-            setScreen(s.id)
-            requestAnimationFrame(() => heading.current?.focus())
-          }}
+          onClick={() => go(s.id)}
           aria-current={screen === s.id ? 'page' : undefined}
           className="rr-tab"
         >
@@ -77,7 +79,7 @@ export default function App() {
           </div>
           <div className="space-y-6">
             {error && <Status error>Could not reach RideRecord: {error}</Status>}
-            {screen === 'home' && <Home providers={providers} onNavigate={setScreen} />}
+            {screen === 'home' && <Home providers={providers} onNavigate={go} />}
             {screen === 'log' && <TripForm providers={providers} />}
             {screen === 'talk' && <VoiceLog providers={providers} />}
             {screen === 'complain' && <Complaints providers={providers} />}

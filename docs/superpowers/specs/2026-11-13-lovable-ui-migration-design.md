@@ -47,7 +47,7 @@ Source of truth for each file is the Lovable copy at `origin/lovable-update:fron
    - `Button` from `@/components/ui/button` (3 uses: nav tabs in `App.tsx`, two calls to action in `Home.tsx`) → plain `<button type="button">` keeping the same `className`. The shadcn base classes that matter (inline-flex, centring, gap, icon size) move into the `.rr-tab` rule and the two Home class strings.
    - `Link` from `@tanstack/react-router` (6 uses) → `<a href="#app">` for `to="/app"`, `<a href="#">` for `to="/"`.
    - `lucide-react` → add to `frontend/package.json` dependencies. The only new dependency.
-4. Landing/app switch in `main.tsx`: render `<App />` when `location.hash === '#app'`, else `<Landing />`, re-rendering on `hashchange`. Hash, not a path, because the backend serves the build with `StaticFiles(html=True)`, which has no fallback for `/app`.
+4. Landing/app switch in `main.tsx`: render `<App />` when the hash is `#app` or `#main` (`#main` is the app's skip-link target), else `<Landing />`, re-rendering on `hashchange`. Hash, not a path, because the backend serves the build with `StaticFiles(html=True)`, which has no fallback for `/app`.
 5. `index.html`: add the Google Fonts links for Inter and Space Grotesk that Lovable set in `__root.tsx`. Keep our title and description.
 6. Type nits: Lovable's `x?: T | undefined` props work as-is; leave them.
 

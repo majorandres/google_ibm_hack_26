@@ -451,10 +451,10 @@
 .rr-app .btn-primary { color: var(--color-app-surface); }
 .rr-app .btn-primary:disabled { background: var(--color-app-line); border-color: var(--color-app-line); color: var(--color-app-muted); }
 .rr-app .btn-secondary { border-width: 1px; background: var(--color-app-surface); }
-.rr-app .field { border: 1px solid var(--color-app-line); font-size: 1rem; }
+.rr-app .field { border: 1px solid var(--color-app-muted); font-size: 1rem; }
 .rr-app .field:focus-visible { border-color: var(--color-brand); }
 .rr-app .field::placeholder, .rr-app .hint, .rr-app .eyebrow, .rr-app .record-id, .rr-app .built-with { color: var(--color-app-muted); }
-.rr-app .choice { border: 1px solid var(--color-app-line); padding: 0.75rem 1rem; }
+.rr-app .choice { border: 1px solid var(--color-app-muted); padding: 0.75rem 1rem; }
 .rr-app .choice:has(:checked) { border-color: var(--color-brand); }
 .rr-app .record { border-left-width: 1px; }
 .rr-app .record-head { align-items: center; flex-wrap: wrap; }

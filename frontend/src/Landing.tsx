@@ -391,7 +391,7 @@ export default function Landing() {
           font-size: 1.125rem; font-weight: 700; border-radius: 0.75rem; text-decoration: none;
         }
         .lp-band-cta:hover { filter: brightness(1.05); }
-        .lp-band-cta:focus-visible { outline-color: var(--yellow); }
+        .lp a.lp-band-cta:focus-visible { outline-color: var(--yellow); }
         .lp-footer { border-top: 1px solid #e4e7ec; padding: 2rem 0; }
         .lp-footer-inner {
           display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;
