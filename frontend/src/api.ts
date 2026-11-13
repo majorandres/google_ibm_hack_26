@@ -16,8 +16,10 @@ export type Trip = {
   notes: string | null
   trip_date: string
   logged_via: string
+  // Problem rides only, worked out by the backend: where a complaint would go and the days left to file.
+  filing?: { office: string; deadline_days: number | null; days_left: number | null } | null
 }
-export type NewTrip = Omit<Trip, 'id'>
+export type NewTrip = Omit<Trip, 'id' | 'filing'>
 
 export type Extracted = {
   transcript: string
@@ -41,6 +43,7 @@ export type Channel = {
   online_form?: string
   form?: string
   notes?: string
+  deadline_days?: number
   deadline_note?: string
 }
 export type Complaint = {
