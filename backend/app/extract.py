@@ -1,5 +1,6 @@
 """Granite turns a rider's spoken description into a structured incident."""
 
+import itertools
 import re
 from datetime import date
 
@@ -71,7 +72,23 @@ def _ask(transcript: str) -> Extraction | None:
     except ValidationError:
         return None
     # Granite tends to fill in a provider the rider never named, and a wrong provider sends the
-    # complaint to the wrong office. Keep it only if its first word ("DDOT", "SMART") was said.
-    if found.provider and found.provider.split()[0].lower() not in re.findall(r"\w+", transcript.lower()):
+    # complaint to the wrong office. Keep it only if the rider said it.
+    if found.provider and not _was_said(found.provider, transcript):
         found.provider = None
     return found
+
+
+def _was_said(provider: str, transcript: str) -> bool:
+    """The provider's first word must be in the transcript; two words when services share the
+    first one ("DDOT Paratransit" / "DDOT Now"), because "DDOT" alone does not say which.
+
+    shortcut: an ordinary word that is also a name ("smart") still counts as said.
+    """
+    name = provider.lower().split()
+    if not name:
+        return False
+    words = re.findall(r"\w+", transcript.lower())
+    # Speech to Text may split a name: "safe ride", "D dot", "Modiv care".
+    said = set(words) | {a + b for a, b in itertools.pairwise(words)}
+    shared = sum(seed.short_name(p).lower().split()[0] == name[0] for p in seed.providers()) > 1
+    return all(word in said for word in name[: 2 if shared else 1])

@@ -71,7 +71,7 @@ def test_extract_reads_fenced_json_and_maps_the_provider(client, monkeypatch):
         '"summary": "The return ride never came."}\n```'
     )
     monkeypatch.setattr(granite, "chat", lambda prompt: answer)
-    body = client.post("/api/extract", json={"transcript": "my DDOT ride never came"}).json()
+    body = client.post("/api/extract", json={"transcript": "my DDOT Paratransit ride never came"}).json()
     assert body["incident"]["provider_id"] == "ddot-paratransit"
     assert body["incident"]["incident_types"] == ["no_show"]
 

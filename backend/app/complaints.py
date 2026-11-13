@@ -106,14 +106,21 @@ def draft(channel_name: str, rider_id: str, trips: list[dict], provider: dict) -
     facts = _facts(trips, provider["name"])
     cite = cites_ada_rule(provider, trips)
     law = f"\nThen add this sentence, word for word: {LAW}" if cite else ""
+    incidents = json.dumps({"rider_id": rider_id, "incidents": facts})
     prompt = PROMPT.replace("<CHANNEL>", channel_name).replace("<RIDER>", rider_id).replace("<LAW>", law).replace(
-        "<INCIDENTS>", json.dumps({"rider_id": rider_id, "incidents": facts})
+        "<INCIDENTS>", incidents
     )
     try:
         letter = granite.chat(prompt)
         # A "[Your Address]"-style blank would ask the rider for details we promise not to collect.
-        if re.search(r"\[(?!Rider signature\])[^\]]*\]", letter):
-            raise ValueError("Granite's letter has fill-in placeholders")
+        # Brackets the rider wrote themselves (a note, the rider ID) are not blanks.
+        blanks = [
+            b
+            for b in re.findall(r"\[[^\]]*\]", letter)
+            if b.lower() != "[rider signature]" and b not in incidents
+        ]
+        if blanks:
+            raise ValueError(f"Granite's letter has fill-in placeholders: {blanks}")
         return letter, "granite"
     except Exception:  # the demo must still produce a letter when watsonx is down
         log.exception("Granite draft failed; using the template")

@@ -212,7 +212,24 @@ def test_a_provider_the_rider_never_named_is_dropped(client, monkeypatch):  # no
     monkeypatch.setattr(granite, "chat", lambda prompt: _granite_names("DDOT Paratransit"))
     ask = lambda said: client.post("/api/extract", json={"transcript": said}).json()["incident"]
     assert ask("My return ride from Henry Ford never came.")["provider_id"] is None
-    assert ask("My DDOT return ride never came.")["provider_id"] == "ddot-paratransit"
+    assert ask("My DDOT Paratransit return ride never came.")["provider_id"] == "ddot-paratransit"
+    # "DDOT" alone could be DDOT Now: Granite's pick between the two is still a guess.
+    assert ask("My DDOT return ride never came.")["provider_id"] is None
+
+
+def test_a_provider_name_speech_to_text_split_in_two_is_kept(client, monkeypatch):  # noqa: F811
+    monkeypatch.setattr(granite, "chat", lambda prompt: _granite_names("SafeRide"))
+    ask = lambda said: client.post("/api/extract", json={"transcript": said}).json()["incident"]
+    assert ask("safe ride never came for me")["provider_id"] == "saferide-mi"
+    monkeypatch.setattr(granite, "chat", lambda prompt: _granite_names(" "))
+    assert ask("my ride never came")["provider_id"] is None  # a blank provider must not lose the incident
+
+
+def test_brackets_the_rider_wrote_and_a_capital_signature_are_not_placeholders(client, monkeypatch):  # noqa: F811
+    trip = post_trip(client, incident_type="driver_conduct", notes="Driver [name unknown] yelled at me.")
+    letter = "To: DDOT\n\n- Driver [name unknown] yelled at me.\n\n[Rider Signature]"
+    monkeypatch.setattr(granite, "chat", lambda prompt: letter)
+    assert complain(client, [trip.json()["id"]]).json()["drafted_by"] == "granite"
 
 
 def test_a_letter_with_fill_in_placeholders_falls_back_to_the_template(client, monkeypatch):  # noqa: F811
