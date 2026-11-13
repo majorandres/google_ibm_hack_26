@@ -1,0 +1,7 @@
+[
+ {"capability":"screens (Log, Talk, Complaints, Patterns)","source":"src/*.tsx","outcome":"migrate","status":"done","next_action":"none"},
+ {"capability":"design system","source":"src/index.css","outcome":"migrate","status":"done","next_action":"none"},
+ {"capability":"FastAPI backend (/api/*)","source":"external, not in archive","outcome":"keep (user choice)","status":"pending","next_action":"user provides hosted server URL as RIDERECORD_API_URL"},
+ {"capability":"database, auth, records","source":"behind FastAPI; demo account only","outcome":"keep with backend (user choice)","status":"accepted","next_action":"none"},
+ {"capability":"e2e playwright tests","source":"e2e/","outcome":"not ported","status":"accepted","next_action":"none"}
+]

@@ -1,0 +1,471 @@
+@import "tailwindcss" source(none);
+@source "../src";
+
+/* ============================================================
+   RideRecord design system
+   Great Lakes blue + limestone. No borrowed university marks.
+   Every pairing below is contrast-checked; see docs/design-system.md.
+   ============================================================ */
+
+@theme {
+  --color-brand: oklch(0.424 0.199 265.638);
+  --color-brand-hover: oklch(0.352 0.16 265.638);
+  --color-brand-highlight: oklch(0.852 0.199 91.936);
+  --color-app-surface: oklch(1 0 0);
+  --color-app-background: oklch(0.977 0.006 264);
+  --color-app-ink: oklch(0.21 0.034 264.665);
+  --color-app-muted: oklch(0.446 0.043 257.281);
+  --color-app-line: oklch(0.928 0.006 264.531);
+  --color-app-tint: oklch(0.932 0.032 265);
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  /* --- surface ------------------------------------------------ */
+  --color-limestone: #faf8f4; /* page background, warm not sterile */
+  --color-paper: #ffffff; /* raised records */
+  --color-line: #d5cdc0; /* hairline rules, 1px, no shadows */
+  --color-line-strong: #938778;
+
+  /* --- water (primary) ---------------------------------------- */
+  --color-ink: #0a1a24; /* body text, deep lake near-black */
+  --color-deep: #103a55;
+  --color-lake: #15577e; /* primary action */
+  --color-lake-dark: #0f4160; /* hover/active */
+  --color-tint: #deebf3; /* selected fill */
+
+  /* --- accents ------------------------------------------------
+     signal: ONLY on ink or lake backgrounds. Measured 10.6:1 on
+             ink and 4.7:1 on lake. On limestone it is 1.6:1 --
+             never use it as text on a light surface.
+     rust:   the warm accent for text on light (7.1:1).       */
+  --color-signal: #f3c074;
+  --color-rust: #8f3a10;
+
+  /* --- status: always paired with an icon and a word --------- */
+  --color-filed: #15614a;
+  --color-overdue: #99202a;
+  --color-pending: #6e5210;
+
+  /* --- type ---------------------------------------------------
+     IBM Plex is open source and quietly signals the IBM stack.
+     Fallbacks are real so an offline demo degrades, not breaks. */
+  --font-sans:
+    'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:
+    'IBM Plex Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace;
+
+  /* --- shape --------------------------------------------------
+     Slightly squared. A record is a document, not a bubble. */
+  --radius-field: 0.25rem;
+  --radius-record: 0.375rem;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: local('IBM Plex Sans'),
+    url('https://fonts.gstatic.com/s/ibmplexsans/v19/zYX9KVElMYYaJe8bpLHnCwDKhdHeFaxOedc.woff2')
+      format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: local('IBM Plex Mono'),
+    url('https://fonts.gstatic.com/s/ibmplexmono/v19/-F63fjptAgt5VM-kVkqdyU8n1iIq131nj-o.woff2')
+      format('woff2');
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-limestone);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 1.0625rem; /* 17px floor: this app is read by people who need it bigger */
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+
+  /* One focus treatment everywhere. Visible on light and dark. */
+  :focus-visible {
+    outline: 3px solid var(--color-lake);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  .on-ink :focus-visible,
+  .bg-ink :focus-visible {
+    outline-color: var(--color-signal);
+  }
+
+  h1 {
+    font-size: clamp(1.75rem, 1.2rem + 2.2vw, 2.5rem);
+    line-height: 1.12;
+    letter-spacing: -0.021em;
+    font-weight: 600;
+    text-wrap: balance;
+  }
+  h2 {
+    font-size: clamp(1.3rem, 1.1rem + 0.9vw, 1.6rem);
+    line-height: 1.2;
+    letter-spacing: -0.014em;
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  /* Numbers, case IDs, times and route codes are data. Set them as data. */
+  time,
+  code,
+  kbd,
+  samp,
+  [data-mono] {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'zero' 1;
+  }
+
+  ::selection {
+    background: var(--color-tint);
+    color: var(--color-ink);
+  }
+}
+
+/* ============================================================
+   Components
+   Signature element is .record — a filed document, not a card:
+   hairline rules, mono case number, status word + shape.
+   ============================================================ */
+@layer components {
+  /* --- actions ------------------------------------------------
+     56px primary. The brief said 48 minimum; this app's users
+     are often one-handed on a phone at a bus stop. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 3.5rem;
+    padding: 0 1.5rem;
+    border-radius: var(--radius-field);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -0.006em;
+    cursor: pointer;
+    transition:
+      background-color 140ms ease,
+      border-color 140ms ease,
+      transform 90ms ease;
+  }
+  .btn:active {
+    transform: translateY(1px);
+  }
+
+  .btn-primary {
+    background-color: var(--color-lake);
+    color: #fff;
+    border: 2px solid var(--color-lake);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-lake-dark);
+    border-color: var(--color-lake-dark);
+  }
+  .btn-primary:disabled {
+    background-color: var(--color-line-strong);
+    border-color: var(--color-line-strong);
+    color: #fff;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    background-color: transparent;
+    color: var(--color-lake);
+    border: 2px solid var(--color-lake);
+  }
+  .btn-secondary:hover {
+    background-color: var(--color-tint);
+  }
+
+  .btn-block {
+    width: 100%;
+  }
+
+  /* --- fields ------------------------------------------------- */
+  .field {
+    display: block;
+    width: 100%;
+    min-height: 3.25rem;
+    padding: 0.625rem 0.875rem;
+    background-color: var(--color-paper);
+    border: 2px solid var(--color-line-strong);
+    border-radius: var(--radius-field);
+    font-size: 1.0625rem;
+    font-family: inherit;
+    color: var(--color-ink);
+  }
+  .field::placeholder {
+    color: #6b6257;
+  }
+  .field:hover {
+    border-color: var(--color-deep);
+  }
+
+  .label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .hint {
+    margin-top: 0.375rem;
+    font-size: 0.9375rem;
+    color: #5a5146;
+  }
+
+  /* --- choice (big tappable radio/checkbox) ------------------- */
+  .choice {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 3.25rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--color-paper);
+    border: 2px solid var(--color-line-strong);
+    border-radius: var(--radius-field);
+    cursor: pointer;
+    transition: border-color 140ms ease, background-color 140ms ease;
+  }
+  .choice:hover {
+    border-color: var(--color-deep);
+  }
+  .choice:has(:checked) {
+    border-color: var(--color-lake);
+    background-color: var(--color-tint);
+    font-weight: 600;
+    box-shadow: inset 0 0 0 1px var(--color-lake);
+  }
+
+  /* --- record: the signature component ----------------------- */
+  .record {
+    background-color: var(--color-paper);
+    border: 1px solid var(--color-line);
+    border-left: 3px solid var(--color-deep);
+    border-radius: var(--radius-record);
+  }
+  .record-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .record-id {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: 0.04em;
+    color: #5a5146;
+    white-space: nowrap;
+  }
+  .record-body {
+    padding: 1rem;
+  }
+
+  /* Deadline pressure, rendered as a rule rather than a number.
+     Set --pct inline. Accessible name goes on the parent. */
+  .deadline {
+    height: 4px;
+    background-color: var(--color-line);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .deadline > span {
+    display: block;
+    height: 100%;
+    width: var(--pct, 0%);
+    background-color: var(--color-deep);
+  }
+  .deadline[data-state='overdue'] > span {
+    background-color: var(--color-overdue);
+  }
+
+  /* --- status: shape + word + colour, never colour alone ----- */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+    padding: 0.1875rem 0.625rem;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.015em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .chip::before {
+    content: '';
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: currentColor;
+    flex: none;
+  }
+  .chip-filed {
+    color: var(--color-filed);
+  }
+  .chip-filed::before {
+    border-radius: 999px; /* circle */
+  }
+  .chip-pending {
+    color: var(--color-pending);
+  }
+  .chip-pending::before {
+    clip-path: polygon(50% 0, 100% 100%, 0 100%); /* triangle */
+  }
+  .chip-overdue {
+    color: var(--color-overdue);
+  }
+  .chip-overdue::before {
+    clip-path: polygon(
+      50% 0,
+      100% 25%,
+      100% 75%,
+      50% 100%,
+      0 75%,
+      0 25%
+    ); /* hexagon */
+  }
+
+  /* --- structure --------------------------------------------- */
+  .rule {
+    border: 0;
+    border-top: 1px solid var(--color-line);
+    margin: 1.5rem 0;
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #5a5146;
+  }
+
+  /* --- tab bar ------------------------------------------------ */
+  .tabbar {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    background-color: var(--color-paper);
+    border-top: 1px solid var(--color-line);
+  }
+  .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.125rem;
+    min-height: 3.75rem;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #4a423a;
+    border-top: 3px solid transparent;
+    cursor: pointer;
+  }
+  .tab[aria-current='page'] {
+    color: var(--color-lake);
+    border-top-color: var(--color-lake);
+    background-color: var(--color-tint);
+  }
+
+  /* --- the quiet IBM credit ----------------------------------- */
+  .built-with {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: #6b6257;
+  }
+}
+
+/* ============================================================
+   Motion: every animation has a still version.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .btn:active {
+    transform: none;
+  }
+}
+
+/* Honour forced colours (Windows high contrast) rather than fighting it. */
+@media (forced-colors: active) {
+  .chip,
+  .record,
+  .field,
+  .choice {
+    border: 1px solid CanvasText;
+  }
+  .deadline > span {
+    background-color: Highlight;
+  }
+}
+
+/* The app shares the landing's brand, while retaining its light surfaces. */
+.rr-app {
+  --color-limestone: var(--color-app-background);
+  --color-paper: var(--color-app-surface);
+  --color-ink: var(--color-app-ink);
+  --color-lake: var(--color-brand);
+  --color-lake-dark: var(--color-brand-hover);
+  --color-deep: var(--color-brand);
+  --color-tint: var(--color-app-tint);
+  --color-line: var(--color-app-line);
+  --color-line-strong: var(--color-app-muted);
+  --radius-field: 0.5rem;
+  --radius-record: 0.5rem;
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+.rr-app h1, .rr-app h2, .rr-app h3, .rr-app legend {
+  font-family: var(--font-display);
+  letter-spacing: 0;
+}
+.rr-app h1 { font-size: 2rem; font-weight: 700; line-height: 1.2; }
+.rr-app h2, .rr-app legend { font-size: 1.25rem; line-height: 1.4; }
+.rr-app .btn { font-size: 1rem; letter-spacing: 0; border-radius: 0.5rem; }
+.rr-app .btn-primary { color: var(--color-app-surface); }
+.rr-app .btn-primary:disabled { background: var(--color-app-line); border-color: var(--color-app-line); color: var(--color-app-muted); }
+.rr-app .btn-secondary { border-width: 1px; background: var(--color-app-surface); }
+.rr-app .field { border: 1px solid var(--color-app-line); font-size: 1rem; }
+.rr-app .field:focus-visible { border-color: var(--color-brand); }
+.rr-app .field::placeholder, .rr-app .hint, .rr-app .eyebrow, .rr-app .record-id, .rr-app .built-with { color: var(--color-app-muted); }
+.rr-app .choice { border: 1px solid var(--color-app-line); padding: 0.75rem 1rem; }
+.rr-app .choice:has(:checked) { border-color: var(--color-brand); }
+.rr-app .record { border-left-width: 1px; }
+.rr-app .record-head { align-items: center; flex-wrap: wrap; }
+.rr-app [role='alert'] { border: 0; border-radius: 0.5rem; background: color-mix(in oklab, var(--color-overdue) 7%, var(--color-app-surface)); padding: 0.75rem 1rem; font-weight: 400; font-size: 0.875rem; line-height: 1.5; }
+.rr-app [role='alert']::before { flex: none; }
+.rr-navigation { display: flex; gap: 0.375rem; }
+.rr-navigation .rr-tab { min-height: 48px; height: auto; border-radius: 0.5rem; color: var(--color-app-muted); font-size: 0.875rem; font-weight: 600; background: transparent; box-shadow: none; }
+.rr-navigation .rr-tab:hover { background: var(--color-app-background); }
+.rr-navigation .rr-tab[aria-current='page'] { background: var(--color-app-tint); color: var(--color-brand); }
+.rr-navigation .rr-tab svg { width: 19px; height: 19px; }
+@media (max-width: 767px) {
+  .rr-navigation { width: 100%; gap: 0; }
+  .rr-navigation .rr-tab { flex: 1; min-width: 0; flex-direction: column; gap: 0.25rem; font-size: 0.6875rem; padding: 0.625rem 0.125rem; border-radius: 0; min-height: 64px; }
+}
