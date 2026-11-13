@@ -5,7 +5,7 @@ from datetime import date, timedelta
 import pytest
 from fastapi.testclient import TestClient
 
-from app import complaints, granite, main, stats, store
+from app import complaints, extract, granite, main, stats, store
 from app.config import REPO_ROOT, Settings
 from app.main import DEMO_RIDER, app
 
@@ -19,6 +19,7 @@ def client(monkeypatch):
     monkeypatch.setattr("app.speech.get_settings", lambda: settings)
     granite._model.cache_clear()
     store._mem.clear()
+    extract._answers.clear()
     main._paid_calls.clear()
     with TestClient(app) as c:  # the context manager runs lifespan, which seeds the demo rider
         yield c

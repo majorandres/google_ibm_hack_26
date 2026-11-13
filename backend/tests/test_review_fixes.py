@@ -123,7 +123,7 @@ def test_extract_keeps_a_resolved_past_date_and_drops_anything_else(client, monk
         (None, None),
     ]:
         monkeypatch.setattr(granite, "chat", lambda prompt, said=said: prompts.append(prompt) or _granite_says(said))
-        incident = client.post("/api/extract", json={"transcript": "it never came"}).json()["incident"]
+        incident = client.post("/api/extract", json={"transcript": f"it never came ({said})"}).json()["incident"]
         assert incident["date_mentioned"] == kept
     assert clock.today().isoformat() in prompts[0]  # Granite needs today to resolve "yesterday"
 
@@ -173,3 +173,19 @@ def test_days_left_counts_from_the_michigan_day(client, monkeypatch):  # noqa: F
 def test_a_ride_cannot_be_logged_for_a_future_day(client):  # noqa: F811
     tomorrow = str(clock.today() + timedelta(days=1))
     assert post_trip(client, trip_date=tomorrow).status_code == 422
+
+
+# --- Backend plan §10: cache extraction answers so the demo does not wait on watsonx ---
+
+
+def test_the_same_sentence_asks_granite_only_once(client, monkeypatch):  # noqa: F811
+    prompts = []
+    monkeypatch.setattr(granite, "chat", lambda prompt: prompts.append(prompt) or _granite_says(None))
+    said = [
+        "My return ride from Henry Ford never came.",
+        "my return ride from henry ford never came",  # Speech to Text drops case and punctuation
+        "My return ride never came.",
+    ]
+    incidents = [client.post("/api/extract", json={"transcript": s}).json()["incident"] for s in said]
+    assert len(prompts) == 2
+    assert incidents[0] == incidents[1]

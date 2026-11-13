@@ -1,5 +1,8 @@
 """Granite turns a rider's spoken description into a structured incident."""
 
+import re
+from datetime import date
+
 from pydantic import ValidationError
 
 from app import clock, granite, seed
@@ -25,11 +28,25 @@ def _json_part(text: str) -> str:
     return text[text.find("{") : text.rfind("}") + 1]
 
 
-def extract(transcript: str) -> Extraction | None:
-    """None means Granite's answer failed validation: fall back to the manual form.
+# Same words on the same day get the same answer (temperature 0), so one rehearsal makes the demo
+# sentences instant and the live demo does not wait on watsonx (plan §10). Errors are not stored.
+_answers: dict[tuple[str, date], Extraction | None] = {}
+MAX_ANSWERS = 500  # shortcut: per instance, cleared when full; use a real cache if traffic grows
 
-    No retry: chat() runs at temperature 0, so asking again gives the same answer.
-    """
+
+def extract(transcript: str) -> Extraction | None:
+    """None means Granite's answer failed validation: fall back to the manual form."""
+    # Speech to Text and typing differ in case and punctuation, not in words.
+    key = (" ".join(re.findall(r"\w+", transcript.lower())), clock.today())
+    if key not in _answers:
+        if len(_answers) >= MAX_ANSWERS:
+            _answers.clear()
+        _answers[key] = _ask(transcript)
+    return _answers[key]
+
+
+def _ask(transcript: str) -> Extraction | None:
+    """No retry: chat() runs at temperature 0, so asking again gives the same answer."""
     prompt = (
         PROMPT.replace("<TODAY>", f"{clock.today():%A %Y-%m-%d}")
         .replace("<PROVIDERS>", ", ".join(seed.short_name(p) for p in seed.providers()))
