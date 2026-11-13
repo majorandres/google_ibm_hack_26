@@ -197,3 +197,28 @@ def test_an_unusable_answer_is_not_kept_so_the_next_try_asks_again(client, monke
     ask = lambda: client.post("/api/extract", json={"transcript": "my ride never came"}).json()["incident"]
     assert ask() is None  # first answer was not JSON: manual form
     assert ask() is not None  # a rehearsal miss must not stick for the rest of the day
+
+
+# --- Live Granite run, 2026-11-13: guards for what the prompt alone did not stop ---
+
+
+def _granite_names(provider):
+    answer = json.loads(_granite_says(None))
+    return json.dumps({**answer, "provider": provider})
+
+
+def test_a_provider_the_rider_never_named_is_dropped(client, monkeypatch):  # noqa: F811
+    # Live, Granite answered "DDOT Paratransit" for a sentence that names no provider.
+    monkeypatch.setattr(granite, "chat", lambda prompt: _granite_names("DDOT Paratransit"))
+    ask = lambda said: client.post("/api/extract", json={"transcript": said}).json()["incident"]
+    assert ask("My return ride from Henry Ford never came.")["provider_id"] is None
+    assert ask("My DDOT return ride never came.")["provider_id"] == "ddot-paratransit"
+
+
+def test_a_letter_with_fill_in_placeholders_falls_back_to_the_template(client, monkeypatch):  # noqa: F811
+    # Live, Granite opened with "[Your Name]", "[Your Address]", "[Phone Number]" lines.
+    letter = "[Your Name]\n[Your Address]\n\nDear DDOT,\nMy rides were late.\n\n[Rider signature]"
+    monkeypatch.setattr(granite, "chat", lambda prompt: letter)
+    body = complain(client, problem_trip_ids(client)).json()
+    assert body["drafted_by"] == "template"
+    assert "[Your" not in body["draft"]

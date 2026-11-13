@@ -15,10 +15,21 @@ Return ONLY valid JSON matching this schema, with no extra text:
    "excessive_length","long_hold","wrong_vehicle","driver_conduct","other"],
  "minutes_late": integer|null, "date_mentioned": "YYYY-MM-DD"|null,
  "summary": string (one plain-language sentence)}
+What each incident type means:
+- late_pickup: the vehicle came, but late.
+- no_show: a booked ride never arrived.
+- trip_denied: the rider asked to book a ride and was refused or told none was available.
+- excessive_length: the ride itself took far too long.
+- long_hold: the rider waited on hold on the phone to book.
+- wrong_vehicle: the vehicle sent could not carry the rider (for example, no room for a wheelchair).
+- driver_conduct: the driver was rude, unsafe, or did not secure the rider or wheelchair.
+- other: anything else.
+Use only the types the rider described.
 Rules: Never guess numbers that were not said. If unsure, use null.
 "date_mentioned" is the day of the ride. Today is <TODAY>, so turn "yesterday" or
 "last Tuesday" into that date. Use null if the rider did not say which day.
-"provider" must be exactly one of the known providers, or null.
+"provider" is null unless the rider said the provider's name. Never guess it from a place,
+a hospital, or a trip type. When named, use exactly one of the known providers.
 Known providers: <PROVIDERS>.
 Rider said: "<TRANSCRIPT>\""""
 
@@ -56,6 +67,11 @@ def _ask(transcript: str) -> Extraction | None:
         .replace("<TRANSCRIPT>", transcript.replace('"', "'"))
     )
     try:
-        return Extraction.model_validate_json(_json_part(granite.chat(prompt)))
+        found = Extraction.model_validate_json(_json_part(granite.chat(prompt)))
     except ValidationError:
         return None
+    # Granite tends to fill in a provider the rider never named, and a wrong provider sends the
+    # complaint to the wrong office. Keep it only if its first word ("DDOT", "SMART") was said.
+    if found.provider and found.provider.split()[0].lower() not in re.findall(r"\w+", transcript.lower()):
+        found.provider = None
+    return found

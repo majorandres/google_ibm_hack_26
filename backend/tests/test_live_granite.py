@@ -68,9 +68,11 @@ def test_extraction(said, expected):
     }
     print(f"\n  {said}\n  -> {got} | {found.summary}")
     assert expected["type"] in got["type"]
-    for field in ("direction", "minutes_late", "provider_id", "date_mentioned"):
+    for field in ("direction", "minutes_late", "date_mentioned"):
         if field in expected:
             assert got[field] == expected[field], field
+    # A provider the rider never named must stay empty: a guess routes the complaint wrongly.
+    assert got["provider_id"] == expected.get("provider_id"), "provider"
 
 
 def test_complaint_draft():
@@ -90,6 +92,11 @@ def test_complaint_draft():
     print(f"\n{letter}")
     assert drafted_by == "granite", "Granite failed and the template was used; see the log above"
     assert "[Rider signature]" in letter
+    assert letter.startswith("To: "), "the letter should open with the office it is for"
+    assert any(w in letter.lower() for w in ("ask", "request", "please")), "the letter never says what the rider wants"
+    for padding in ("employment", "work", "job"):
+        # No note mentions work, so a letter that does has invented an effect.
+        assert padding not in letter.lower().split(), f"invented effect: {padding!r}"
     for trip in trips:
         # Granite may write a date as 2026-11-10, November 10 or 11/10; any of them counts.
         day = date.fromisoformat(trip["trip_date"])

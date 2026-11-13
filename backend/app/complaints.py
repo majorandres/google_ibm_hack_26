@@ -5,6 +5,7 @@ Nothing here sends anything. The rider reviews the draft and files it themselves
 
 import json
 import logging
+import re
 from datetime import date
 
 from app import granite, seed
@@ -17,9 +18,16 @@ DISCLAIMER = (
 
 PROMPT = """Write a short, polite, factual complaint letter from a paratransit rider.
 Use ONLY the facts in INCIDENTS. Do not invent names, times, or outcomes.
-Address it to: <CHANNEL>. Reading level: 6th-8th grade.
-Structure: who I am (rider ID only) -> what happened (bulleted, dated) ->
-why it matters (missed care/work if stated) -> what I'm asking for.<LAW>
+Reading level: 6th-8th grade. Plain text, no headings.
+The first line is exactly "To: <CHANNEL>". Then a blank line and
+"I am a paratransit rider (rider ID <RIDER>)."
+Never add placeholders in square brackets such as [Your Name], [Address], [Phone] or [Date];
+the rider ID is the only personal detail.
+Then: what happened (one bullet per incident, with its date) -> how it affected me, ONLY
+if a rider_notes entry says so (otherwise leave this out; never mention work, health or money
+that the notes do not mention).
+Then one or two sentences asking the office to look into these trips and tell me
+what they will do so it stops happening.<LAW>
 Do not cite any law or regulation that is not named above.
 End with "[Rider signature]".
 INCIDENTS: <INCIDENTS>"""
@@ -98,11 +106,15 @@ def draft(channel_name: str, rider_id: str, trips: list[dict], provider: dict) -
     facts = _facts(trips, provider["name"])
     cite = cites_ada_rule(provider, trips)
     law = f"\nThen add this sentence, word for word: {LAW}" if cite else ""
-    prompt = PROMPT.replace("<CHANNEL>", channel_name).replace("<LAW>", law).replace(
+    prompt = PROMPT.replace("<CHANNEL>", channel_name).replace("<RIDER>", rider_id).replace("<LAW>", law).replace(
         "<INCIDENTS>", json.dumps({"rider_id": rider_id, "incidents": facts})
     )
     try:
-        return granite.chat(prompt), "granite"
+        letter = granite.chat(prompt)
+        # A "[Your Address]"-style blank would ask the rider for details we promise not to collect.
+        if re.search(r"\[(?!Rider signature\])[^\]]*\]", letter):
+            raise ValueError("Granite's letter has fill-in placeholders")
+        return letter, "granite"
     except Exception:  # the demo must still produce a letter when watsonx is down
         log.exception("Granite draft failed; using the template")
         return template_draft(channel_name, rider_id, facts, cite), "template"
