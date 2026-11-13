@@ -5,11 +5,17 @@ import App from './App.tsx'
 import Landing from './Landing.tsx'
 
 // Hash, not a path: the backend serves static files with no fallback for /app.
+const isApp = () => ['#app', '#main'].includes(location.hash) // #main is the app's skip link
+
 function Root() {
-  const [inApp, setInApp] = useState(location.hash === '#app')
+  const [inApp, setInApp] = useState(isApp)
   useEffect(() => {
+    let current = isApp()
     const onHash = () => {
-      setInApp(location.hash === '#app')
+      const next = isApp()
+      if (next === current) return // in-page jumps (#main, #top) keep their scroll
+      current = next
+      setInApp(next)
       window.scrollTo(0, 0)
     }
     window.addEventListener('hashchange', onHash)
