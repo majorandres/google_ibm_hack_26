@@ -12,6 +12,7 @@ A shift-aware commute check for the Michigan DevFest AI Hackathon 2026 (Mobility
 
 | File | What it is |
 |---|---|
+| `ci-cd.md` | The GitHub Actions workflows: what each step of CI and of the deploy does, the one-time setup, and how they share the app with Terraform. |
 | `why-we-are-building-this.md` | The reason for the project: the person, the problem, the evidence, what the product does and does not do. Start here. |
 | `google-doc/01-hackathon-workbook.md` | The organizers' team workbook. **Its filled-in answers are sample text about a different app ("BusPulse"), not ours.** See the warning at the top of that file. |
 | `google-doc/02-research-report.md` | Research on Michigan mobility problems, with sources, a comparison of candidate problems, the data and APIs available, and which statistics are safe to quote. |
@@ -47,6 +48,7 @@ A shift-aware commute check for the Michigan DevFest AI Hackathon 2026 (Mobility
   - `Dockerfile`: one image in which FastAPI serves both the API and the built frontend, so there is a single app to deploy.
   - `scripts/deploy.sh`: builds and pushes the image, then applies Terraform.
   - Checked: backend tests and lint pass, the frontend builds, `terraform validate` succeeds.
+- **CI/CD added** (`.github/workflows/`, explained in `ci-cd.md`). CI lints, tests and builds the backend, frontend, Terraform and Docker image on every pull request. Every push to `main` runs CI and then deploys to Code Engine. The frontend lockfile was out of sync with `package.json` (`npm ci` failed) and was regenerated.
 
 ### Decided
 
@@ -69,6 +71,7 @@ These came out of the research as open risks. Check each one before building on 
 
 - Whether Google's transit routing returns DDOT and SMART trips late at night (for example, leaving a plant at 11:30 PM). Nobody has run a test query.
 - Whether the deploy works end to end. The Docker image has not been built and nothing has been deployed. The first run of `scripts/deploy.sh` will show whether the team's role can create a Container Registry namespace.
+- Whether the GitHub Actions workflows pass on GitHub. Their steps were run locally (except the Docker build), but neither workflow has run on GitHub yet. The deploy workflow also needs `scripts/deploy.sh` to have run once and the `IBMCLOUD_API_KEY` repository secret.
 - Whether a live call to Granite succeeds. It needs an IBM Cloud API key in `.env`, which had not been created when this was written.
 - The current DDOT on-time figures. The research had January 2026 numbers only.
 

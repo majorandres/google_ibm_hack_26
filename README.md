@@ -11,6 +11,7 @@ A shift-aware commute check for the Michigan DevFest AI Hackathon 2026: can a wo
 | `infra/` | Terraform for IBM Cloud: Container Registry namespace and a Code Engine app. |
 | `Dockerfile` | One image: FastAPI serves the API under `/api` and the built frontend at `/`. |
 | `scripts/deploy.sh` | Build, push and `terraform apply`. |
+| `.github/workflows/` | CI on every PR; deploy to Code Engine on every push to `main`. See [docs/ci-cd.md](docs/ci-cd.md). |
 | `docs/` | Project context and Google Doc exports. |
 
 ## Local development
@@ -52,7 +53,9 @@ bash scripts/deploy.sh
 
 It creates the registry namespace, builds and pushes the image to `us.icr.io`, then applies the rest of `infra/` and prints the app URL.
 
-Terraform state is local (`infra/terraform.tfstate`, gitignored), so one person should own deploys.
+Terraform state is local (`infra/terraform.tfstate`, gitignored), so one person should own `deploy.sh`.
+
+After that first run, merging to `main` deploys automatically through GitHub Actions. It needs the `IBMCLOUD_API_KEY` repository secret. [docs/ci-cd.md](docs/ci-cd.md) lists every step of both workflows, the one-time setup, and when to still use `deploy.sh`.
 
 ### What the hackathon account allows
 
