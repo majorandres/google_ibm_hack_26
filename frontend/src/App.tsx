@@ -4,6 +4,7 @@ import { api, type Provider } from './api'
 import Complaints from './Complaints'
 import Dashboard from './Dashboard'
 import Home from './Home'
+import { withTransition } from './motion'
 import TripForm from './TripForm'
 import { Status } from './ui'
 import VoiceLog from './VoiceLog'
@@ -28,8 +29,7 @@ export default function App() {
   }, [])
 
   const go = (id: ScreenId) => {
-    setScreen(id)
-    requestAnimationFrame(() => heading.current?.focus())
+    void withTransition(() => setScreen(id)).then(() => heading.current?.focus())
   }
 
   const title = SCREENS.find((s) => s.id === screen)?.label ?? 'RideRecord'
