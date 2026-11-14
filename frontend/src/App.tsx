@@ -58,11 +58,11 @@ export default function App() {
       <header className="border-b border-app-line bg-app-surface">
         <div className="mx-auto flex min-h-20 max-w-6xl items-center justify-between gap-4 px-5 md:px-8">
           <a href="#" className="flex items-center gap-2.5 font-display text-xl font-bold text-app-ink">
-            <span className="flex size-9 items-center justify-center rounded-lg bg-brand text-app-surface"><ClipboardCheck className="size-5" aria-hidden="true" /></span>
+            <span className="flex size-9 items-center justify-center rounded-lg bg-brand text-app-surface shadow-[0_3px_0_var(--color-brand-hover)]"><ClipboardCheck className="size-5" aria-hidden="true" /></span>
             RideRecord
           </a>
           <div className="hidden md:block">{navigation}</div>
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-highlight text-app-ink" aria-label="Denise's demo account" title="Denise · Demo account"><UserRound className="size-5" aria-hidden="true" /></span>
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-highlight text-app-ink shadow-[0_3px_0_color-mix(in_oklab,var(--color-brand-highlight)_55%,black)]" role="img" aria-label="Denise's demo account" title="Denise · Demo account"><UserRound className="size-5" aria-hidden="true" /></span>
         </div>
       </header>
 
@@ -75,7 +75,8 @@ export default function App() {
           </h1>
           <span className="text-sm text-app-muted">Demo account · Denise</span>
           </div>
-          <div className="space-y-6">
+          {/* Keyed by screen so each new screen turns in (index.css, .rr-screen). */}
+          <div key={screen} className="space-y-6 rr-screen">
             {error && <Status error>Could not reach RideRecord: {error}</Status>}
             {screen === 'home' && <Home providers={providers} onNavigate={setScreen} />}
             {screen === 'log' && <TripForm providers={providers} />}

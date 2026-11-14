@@ -10,7 +10,7 @@ function Rate({ row, max }: { row: StatRow; max: number }) {
   return (
     <span className="flex items-center gap-2">
       <span className="w-14 tabular-nums">{percent(row.rate)}</span>
-      <span aria-hidden="true" className="h-3 rounded bg-brand" style={{ width: `${(row.rate / max) * 8}rem` }} />
+      <span aria-hidden="true" className="rr-bar h-3 rounded bg-brand" style={{ width: `${(row.rate / max) * 8}rem` }} />
     </span>
   )
 }
@@ -30,7 +30,7 @@ export default function Dashboard() {
   const flagged = stats.by_provider_month.filter((r) => r.flagged)
   return (
     <div className="space-y-6">
-      <p className="rounded-lg border border-pending bg-brand-highlight/20 p-3 text-lg font-semibold">
+      <p className="slab rounded-lg border border-pending bg-brand-highlight/20 p-3 text-lg font-semibold">
         Demo data, not real riders. These providers are made up. Nothing here describes a real agency.
       </p>
 

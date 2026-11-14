@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import Landing from './Landing.tsx'
+import { startTilt } from './tilt.ts'
+
+startTilt() // every component on the site tilts toward the mouse
 
 // Hash, not a path: the backend serves static files with no fallback for /app.
 const isApp = () => ['#app', '#main'].includes(location.hash) // #main is the app's skip link
