@@ -13,7 +13,25 @@ because a record is a document rather than a bubble.
 Users are riders with disabilities and their caregivers. Everything is sized for
 one thumb on a phone at a bus stop.
 
-## Palette — Great Lakes blue and limestone
+## The look now — monochrome
+
+Black on white, one typeface (Inter), very large tight headings, black label
+blocks for the landing headline, rows split by black rules, a floating black bar
+at the bottom of the landing page and a halftone dot field behind it (`DotField`
+in `Landing.tsx`). The direction is borrowed from romainavalle.dev; the code,
+artwork and typeface are our own.
+
+The live values are the `--color-brand*` and `--color-app-*` tokens at the top
+of `@theme` in `index.css`, and the `--blue` / `--ink` / `--muted` variables at
+the top of the landing page's style block. Status colours (`filed`, `overdue`,
+`pending`) and the red in the scroll scene are the only colour left, because
+they carry meaning.
+
+Measured: ink `#0a0a0a` on white 19.8:1; muted `#525252` on white 7.8:1 and on a
+dot or hairline (`#d4d4d4`) 5.3:1; `#a3a3a3` on ink 7.9:1 (the grey words in the
+headline). The dot field is `#d4d4d4` so text over a dot still passes.
+
+## Palette — Great Lakes blue and limestone (original tokens, mostly overridden)
 
 | Token | Hex | Use |
 |---|---|---|
@@ -97,16 +115,12 @@ Tokens (in `@theme`): `--ease-swift` `cubic-bezier(0.23, 1, 0.32, 1)`, `--dur-1`
 | `fx-grow` | bars and deadline rules grow from the left. |
 | `fx-lift` | hover lift for buttons and cards. |
 | `fx-pulse` | the record button while recording. The label changes too, so it is never the only signal. |
-| `fx-aurora` | decorative drifting colour behind the landing hero. `aria-hidden`, hidden in forced colours. |
 
 Rules:
 
 - All of it sits inside `@media (prefers-reduced-motion: no-preference)`.
 - Base styles keep content visible. Only a keyframe `from` may hide something,
   so a browser that skips the animation still shows everything.
-- `fx-aurora` is capped at `opacity: 0.2`. At that cap the darkest it can get is
-  20% brand blue over white, where the hero subtitle (`#475467`) is 5.45:1
-  (calculated, not sampled). If you raise the opacity, re-measure.
 - Screen changes go through `withTransition` in `frontend/src/motion.ts` (View
   Transitions API). Scroll reveals on the landing page use CSS scroll timelines
   behind `@supports`. Both are progressive: a browser without them (Firefox, at

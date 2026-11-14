@@ -8,16 +8,17 @@
    ============================================================ */
 
 @theme {
-  --color-brand: oklch(0.424 0.199 265.638);
-  --color-brand-hover: oklch(0.352 0.16 265.638);
-  --color-brand-highlight: oklch(0.852 0.199 91.936);
-  --color-app-surface: oklch(1 0 0);
-  --color-app-background: oklch(0.977 0.006 264);
-  --color-app-ink: oklch(0.21 0.034 264.665);
-  --color-app-muted: oklch(0.446 0.043 257.281);
-  --color-app-line: oklch(0.928 0.006 264.531);
-  --color-app-tint: oklch(0.932 0.032 265);
-  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  /* Monochrome: black on white, one typeface. Status colours below are the only colour, and they carry meaning. */
+  --color-brand: #0a0a0a;
+  --color-brand-hover: #404040;
+  --color-brand-highlight: #d4d4d4;
+  --color-app-surface: #ffffff;
+  --color-app-background: #ffffff;
+  --color-app-ink: #0a0a0a;
+  --color-app-muted: #525252; /* 7.8:1 on white, 5.3:1 on app-line */
+  --color-app-line: #d4d4d4;
+  --color-app-tint: #ececec;
+  --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
   /* --- surface ------------------------------------------------ */
   --color-limestone: #faf8f4; /* page background, warm not sterile */
   --color-paper: #ffffff; /* raised records */
@@ -405,28 +406,11 @@
    Base styles keep content visible; only a keyframe `from` hides it,
    so a browser that skips the animation still shows everything.
    ============================================================ */
-.fx-aurora {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-  pointer-events: none;
-  opacity: 0.2; /* measured against the hero subtitle; see docs/design-system.md */
-  filter: blur(80px);
-}
-.fx-aurora > * {
-  position: absolute;
-  width: 40vmax;
-  aspect-ratio: 1;
-  border-radius: 50%;
-}
-
 @media (prefers-reduced-motion: no-preference) {
   @keyframes rise { from { opacity: 0; translate: 0 0.75rem; } }
   @keyframes sink { to { opacity: 0; translate: 0 -0.5rem; } }
   @keyframes grow-x { from { scale: 0 1; } }
   @keyframes pulse { to { box-shadow: 0 0 0 1rem transparent; } }
-  @keyframes drift { to { translate: 6% 4%; rotate: 8deg; } }
 
   /* Stagger: set --i to the item's index. Capped so long lists never wait. */
   .fx-rise { animation: rise var(--dur-2) var(--ease-swift) both; animation-delay: calc(min(var(--i, 0), 8) * 60ms); }
@@ -434,7 +418,6 @@
   .fx-lift { transition: translate var(--dur-1) var(--ease-swift), box-shadow var(--dur-1) var(--ease-swift), background-color var(--dur-1) ease; }
   .fx-lift:hover { translate: 0 -2px; box-shadow: 0 8px 20px -12px var(--color-ink); }
   .fx-pulse { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-overdue) 50%, transparent); animation: pulse 1.4s ease-out infinite; }
-  .fx-aurora > * { animation: drift 18s ease-in-out infinite alternate; }
 
   /* Screen changes (see motion.ts). The active tab slides between positions;
      the nav renders twice but one copy is always display:none, so the name stays unique. */
@@ -473,9 +456,6 @@
   .deadline > span {
     background-color: Highlight;
   }
-  .fx-aurora {
-    display: none;
-  }
 }
 
 /* The app shares the landing's brand, while retaining its light surfaces. */
@@ -489,8 +469,8 @@
   --color-tint: var(--color-app-tint);
   --color-line: var(--color-app-line);
   --color-line-strong: var(--color-app-muted);
-  --radius-field: 0.5rem;
-  --radius-record: 0.5rem;
+  --radius-field: 0.3rem;
+  --radius-record: 0.3rem;
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   font-size: 1rem;
   letter-spacing: 0;
@@ -499,7 +479,7 @@
   font-family: var(--font-display);
   letter-spacing: 0;
 }
-.rr-app h1 { font-size: 2rem; font-weight: 700; line-height: 1.2; }
+.rr-app h1 { font-size: clamp(2.25rem, 8vw, 3.5rem); font-weight: 600; line-height: 1; letter-spacing: -0.03em; }
 .rr-app h2, .rr-app legend { font-size: 1.25rem; line-height: 1.4; }
 .rr-app .btn { font-size: 1rem; letter-spacing: 0; border-radius: 0.5rem; }
 .rr-app .btn-primary { color: var(--color-app-surface); }
@@ -531,7 +511,7 @@
 .card {
   background-color: var(--color-paper);
   border: 1px solid var(--color-line);
-  border-radius: 0.75rem;
+  border-radius: 0.3rem;
   padding: 1.25rem;
 }
 .card-head {
@@ -547,9 +527,9 @@
   justify-content: center;
   width: 2.5rem;
   height: 2.5rem;
-  border-radius: 0.625rem;
-  background-color: var(--color-tint);
-  color: var(--color-lake);
+  border-radius: 0.3rem;
+  background-color: var(--color-ink);
+  color: var(--color-paper);
 }
 .card-icon svg {
   width: 1.25rem;
@@ -562,7 +542,7 @@
 .more {
   background-color: var(--color-paper);
   border: 1px solid var(--color-line);
-  border-radius: 0.75rem;
+  border-radius: 0.3rem;
 }
 .more > summary {
   display: flex;
