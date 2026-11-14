@@ -86,7 +86,7 @@ export function Deadline({ pct, label }: { pct: number; label: string }) {
       className="deadline mt-3"
       data-state={clamped >= 100 ? 'overdue' : undefined}
     >
-      <span style={{ ['--pct' as string]: `${clamped}%` }} />
+      <span className="fx-grow" style={{ ['--pct' as string]: `${clamped}%` }} />
     </div>
   )
 }

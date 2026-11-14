@@ -10,7 +10,7 @@ function Rate({ row, max }: { row: StatRow; max: number }) {
   return (
     <span className="flex items-center gap-2">
       <span className="w-14 tabular-nums">{percent(row.rate)}</span>
-      <span aria-hidden="true" className="h-3 rounded bg-brand" style={{ width: `${(row.rate / max) * 8}rem` }} />
+      <span aria-hidden="true" className="fx-grow h-3 rounded bg-brand" style={{ width: `${(row.rate / max) * 8}rem` }} />
     </span>
   )
 }
@@ -34,7 +34,7 @@ export default function Dashboard() {
         Demo data, not real riders. These providers are made up. Nothing here describes a real agency.
       </p>
 
-      <section aria-labelledby="flags-heading">
+      <section aria-labelledby="flags-heading" className="fx-rise">
         <h2 id="flags-heading" className="text-2xl font-semibold">
           Possible patterns
         </h2>
@@ -61,7 +61,7 @@ export default function Dashboard() {
         </p>
       </section>
 
-      <section aria-labelledby="direction-heading">
+      <section aria-labelledby="direction-heading" className="fx-rise" style={{ ['--i' as string]: 1 }}>
         <h2 id="direction-heading" className="text-2xl font-semibold">
           Going there vs. coming back
         </h2>
@@ -85,7 +85,7 @@ export default function Dashboard() {
         </table>
       </section>
 
-      <section aria-labelledby="table-heading">
+      <section aria-labelledby="table-heading" className="fx-rise" style={{ ['--i' as string]: 2 }}>
         <h2 id="table-heading" className="text-2xl font-semibold">
           By provider and month
         </h2>

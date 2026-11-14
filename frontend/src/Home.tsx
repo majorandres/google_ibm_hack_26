@@ -35,10 +35,10 @@ export default function Home({
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <button type="button" onClick={() => onNavigate('log')} className="inline-flex items-center gap-2 [&_svg]:size-4 min-h-16 justify-between rounded-lg bg-brand px-5 text-base font-semibold text-app-surface shadow-none hover:bg-brand-hover">
+        <button type="button" onClick={() => onNavigate('log')} className="fx-lift inline-flex items-center gap-2 [&_svg]:size-4 min-h-16 justify-between rounded-lg bg-brand px-5 text-base font-semibold text-app-surface shadow-none hover:bg-brand-hover">
           <span className="flex items-center gap-3"><Plus aria-hidden="true" />Log a ride</span><ArrowRight aria-hidden="true" />
         </button>
-        <button type="button" onClick={() => onNavigate('talk')} className="inline-flex items-center gap-2 [&_svg]:size-4 border min-h-16 justify-between rounded-lg border-app-line bg-app-surface px-5 text-base font-semibold text-brand shadow-none hover:bg-app-tint">
+        <button type="button" onClick={() => onNavigate('talk')} className="fx-lift inline-flex items-center gap-2 [&_svg]:size-4 border min-h-16 justify-between rounded-lg border-app-line bg-app-surface px-5 text-base font-semibold text-brand shadow-none hover:bg-app-tint">
           <span className="flex items-center gap-3"><Mic aria-hidden="true" />Talk instead</span><ArrowRight aria-hidden="true" />
         </button>
       </div>
@@ -53,8 +53,8 @@ export default function Home({
           <p className="mt-3">No rides logged yet. Your last few rides will show up here.</p>
         )}
         <ul className="mt-3 grid gap-3">
-          {trips?.map((t) => (
-            <li key={t.id} className="record">
+          {trips?.map((t, i) => (
+            <li key={t.id} className="record fx-rise" style={{ ['--i' as string]: i }}>
               <div className="record-head items-center justify-between">
                 <span className="font-semibold leading-snug">
                   <time dateTime={t.trip_date}>{t.trip_date}</time> · {providerName(t.provider_id)} ·{' '}

@@ -137,8 +137,8 @@ export default function Complaints({ providers }: { providers: Provider[] }) {
         {trips === null && !status.error && <p>Loading your rides…</p>}
         {trips?.length === 0 && <p>No problem rides logged yet. Rides you log as late, missed or denied show up here.</p>}
         <ul className="grid gap-3">
-          {trips?.map((t) => (
-            <li key={t.id} className="record">
+          {trips?.map((t, i) => (
+            <li key={t.id} className="record fx-rise" style={{ ['--i' as string]: i }}>
               {/* The whole head is the checkbox's label, so the tap target is the full width of the record.
                   It tints on press, before the checkbox changes, so a tap is answered straight away. */}
               <label className="record-head cursor-pointer items-center justify-start rounded-t-record transition-colors duration-150 active:bg-tint has-checked:bg-tint">
