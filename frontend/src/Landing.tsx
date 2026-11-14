@@ -205,26 +205,8 @@ function RideScene() {
 
 /** Phone frame with a miniature of the app home screen, revealed on scroll. */
 function AppReveal() {
-  const ref = useRef<HTMLDivElement>(null)
-  const [shown, setShown] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setShown(true)
-      return
-    }
-    const observer = new IntersectionObserver(
-      ([entry]) => entry?.isIntersecting && setShown(true),
-      { threshold: 0.35 },
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
   return (
-    <div ref={ref} className={`lp-phone-wrap ${shown ? 'lp-shown' : ''}`}>
+    <div className="lp-phone-wrap">
       <div className="lp-phone" role="img" aria-label="Preview of the RideRecord home screen: a greeting, a Log a ride button, a Talk instead button, and recent complaints with status chips.">
         <p className="lp-phone-hi">Hi, Denise</p>
         <p className="lp-phone-sub">How was today&rsquo;s ride?</p>
@@ -285,7 +267,10 @@ export default function Landing() {
         .lp-header-cta:hover { background: var(--blue-dark); }
 
         /* Hero */
-        .lp-hero { padding: 4rem 0 2rem; text-align: center; }
+        .lp-hero { padding: 4rem 0 2rem; text-align: center; position: relative; isolation: isolate; }
+        .lp-hero .fx-aurora > :nth-child(1) { background: var(--blue); left: -10%; top: -30%; }
+        .lp-hero .fx-aurora > :nth-child(2) { background: var(--yellow); right: -10%; top: -20%; }
+        .lp-hero .fx-aurora > :nth-child(3) { background: var(--blue); left: 30%; bottom: -60%; }
         .lp-hero h1 {
           font-size: clamp(2.5rem, 6vw, 4.25rem); font-weight: 700;
           letter-spacing: -0.03em; line-height: 1.02; margin: 0;
@@ -403,9 +388,23 @@ export default function Landing() {
 
         /* Motion: everything animated only when motion is welcome */
         @media (prefers-reduced-motion: no-preference) {
-          .lp-phone-wrap { opacity: 0; transform: translateY(3rem); transition: opacity 600ms ease, transform 600ms ease; }
-          .lp-phone-wrap.lp-shown { opacity: 1; transform: none; }
-          .lp-cta, .lp-header-cta, .lp-band-cta { transition: background 150ms ease, filter 150ms ease; }
+          .lp-header-cta { transition: background 150ms ease; }
+          .lp-band-cta { transition: translate var(--dur-1) var(--ease-swift), box-shadow var(--dur-1) var(--ease-swift), filter var(--dur-1) ease; }
+          /* Reveal on scroll. Browsers without scroll timelines just show the content. */
+          @supports (animation-timeline: view()) {
+            .lp-phone-wrap, .lp-step, .lp-stat {
+              animation: rise linear both;
+              animation-timeline: view();
+              animation-range: entry 10% cover 30%;
+            }
+          }
+          /* FAQ opens smoothly where supported, instantly elsewhere. */
+          .lp-faq { interpolate-size: allow-keywords; }
+          .lp-faq details::details-content {
+            height: 0; overflow: clip;
+            transition: height var(--dur-2) var(--ease-swift), content-visibility var(--dur-2) allow-discrete;
+          }
+          .lp-faq details[open]::details-content { height: auto; }
         }
         @media (prefers-reduced-motion: reduce) {
           .lp-scene-track { height: auto; }
@@ -434,15 +433,16 @@ export default function Landing() {
       <main id="top">
         {/* 1. Hero + scroll-driven bus scene */}
         <section className="lp-hero lp-wrap" aria-labelledby="lp-hero-h">
-          <h1 id="lp-hero-h">
+          <div className="fx-aurora" aria-hidden="true"><span /><span /><span /></div>
+          <h1 id="lp-hero-h" className="fx-rise">
             The appointment was at nine.
             <br />
             The ride <span className="lp-muteword">never came.</span>
           </h1>
-          <p className="lp-hero-sub">
+          <p className="lp-hero-sub fx-rise" style={{ ['--i' as string]: 2 }}>
             Log it in seconds. We&rsquo;ll draft the complaint and send it to the right place.
           </p>
-          <a href="#app" className="lp-cta">
+          <a href="#app" className="lp-cta fx-rise fx-lift" style={{ ['--i' as string]: 4 }}>
             Log a ride
           </a>
         </section>
@@ -469,7 +469,7 @@ export default function Landing() {
           <p className="lp-section-lead">Three steps between a failed ride and a filed complaint.</p>
           <ol className="lp-steps">
             {STEPS.map((s, i) => (
-              <li key={s.title} className="lp-step">
+              <li key={s.title} className="lp-step fx-lift">
                 <span className="lp-step-num">STEP {i + 1}</span>
                 <div>{s.icon}</div>
                 <h3>{s.title}</h3>
@@ -488,7 +488,7 @@ export default function Landing() {
           </p>
           <ul className="lp-stats">
             {STATS.map((s) => (
-              <li key={s.caption} className="lp-stat">
+              <li key={s.caption} className="lp-stat fx-lift">
                 <span className="lp-stat-num">—</span>
                 <p>{s.caption}</p>
               </li>
@@ -517,7 +517,7 @@ export default function Landing() {
           <div className="lp-wrap">
             <h2 id="lp-band-h">Next time the ride doesn&rsquo;t show, be ready.</h2>
             <p>Ten seconds now means a complaint that lands before the deadline.</p>
-            <a href="#app" className="lp-band-cta">
+            <a href="#app" className="lp-band-cta fx-lift">
               Log a ride
             </a>
           </div>
