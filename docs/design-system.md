@@ -100,8 +100,8 @@ Body floor is 17px. Headings use `clamp()` with negative tracking.
   with black from the left on hover or keyboard focus and its arrow nudges
   right. The first tile is filled from the start because logging is the main job.
 - `DotField` (`ui.tsx`, `.dots`) — the halftone field behind the landing page
-  and the app. It drifts slowly and gathers under the pointer or finger; it does
-  not react to scrolling. Decorative, `aria-hidden`, still under reduced motion,
+  and the app. The pattern stays put; the only movement is a swell that follows
+  the pointer or finger. Decorative, `aria-hidden`, still under reduced motion,
   hidden in forced colours.
 - Frosted boxes — cards, records, collapsed sections and feature tiles use
   `--frost` (72% white) with a backdrop blur, so the dots show through softly

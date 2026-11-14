@@ -40,8 +40,8 @@ export function Logo() {
 }
 
 /**
- * Decorative halftone field behind a whole page: square dots swell and fade in slow
- * waves, and gather under the pointer or finger. Reduced motion draws it once and leaves it still.
+ * Decorative halftone field behind a whole page. The pattern itself stays put; the only
+ * movement is a swell that follows the pointer or finger. Reduced motion leaves it fully still.
  */
 export function DotField() {
   const ref = useRef<HTMLCanvasElement>(null)
@@ -56,9 +56,9 @@ export function DotField() {
     // Pointer target, and the point that eases toward it so the swell trails like liquid.
     const target = { x: -9999, y: -9999 }
     const at = { ...target }
-    const draw = (ms: number) => {
+    const draw = () => {
+      raf = 0
       const dpr = window.devicePixelRatio
-      const t = ms / 4000
       at.x += (target.x - at.x) * 0.08
       at.y += (target.y - at.y) * 0.08
       ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -66,25 +66,26 @@ export function DotField() {
       for (let y = GAP / 2; y < window.innerHeight; y += GAP) {
         for (let x = GAP / 2; x < window.innerWidth; x += GAP) {
           const pull = 1.6 * Math.exp(-((x - at.x) ** 2 + (y - at.y) ** 2) / REACH)
-          const v = Math.min(Math.sin(x * 0.006 + t) + Math.cos(y * 0.008 - t * 0.7) - 0.6 + pull, 1.6)
-          if (v > 0) ctx.fillRect(x * dpr - (v * 1.75 * dpr), y * dpr - (v * 1.75 * dpr), v * 3.5 * dpr, v * 3.5 * dpr)
+          const v = Math.min(Math.sin(x * 0.006) + Math.cos(y * 0.008) - 0.6 + pull, 1.6)
+          if (v > 0) ctx.fillRect((x - v * 1.75) * dpr, (y - v * 1.75) * dpr, v * 3.5 * dpr, v * 3.5 * dpr)
         }
       }
-      if (!reducedMotion()) raf = requestAnimationFrame(draw)
+      // Keep drawing only while the swell is still catching up with the pointer.
+      if (Math.abs(target.x - at.x) + Math.abs(target.y - at.y) > 0.5) raf = requestAnimationFrame(draw)
     }
     const resize = () => {
       canvas.width = window.innerWidth * window.devicePixelRatio
       canvas.height = window.innerHeight * window.devicePixelRatio
-      if (reducedMotion()) draw(0)
+      draw()
     }
     const move = (e: PointerEvent) => {
       target.x = e.clientX
       target.y = e.clientY
+      if (!raf) raf = requestAnimationFrame(draw)
     }
     resize()
-    if (!reducedMotion()) raf = requestAnimationFrame(draw)
     window.addEventListener('resize', resize)
-    window.addEventListener('pointermove', move, { passive: true })
+    if (!reducedMotion()) window.addEventListener('pointermove', move, { passive: true })
     return () => {
       window.removeEventListener('resize', resize)
       window.removeEventListener('pointermove', move)
