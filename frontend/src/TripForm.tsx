@@ -67,8 +67,7 @@ export default function TripForm(props: {
 
   return (
     <form onSubmit={save} className="space-y-4">
-      <div className="split">
-      <div className="space-y-4">
+      <div className="split-even stretch">
       <Card icon={Bus} title="Which ride service?" role="radiogroup" done={!!draft.provider_id}>
         <div className="grid gap-2 sm:grid-cols-2">
           {props.providers.map((p) => (
@@ -117,7 +116,6 @@ export default function TripForm(props: {
       )}
       </Card>
 
-      </div>
       <Card icon={CalendarDays} title="When, and anything to add" className="space-y-4">
       <div>
         <label htmlFor="trip-date" className="label">

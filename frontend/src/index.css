@@ -665,5 +665,6 @@
 @media (min-width: 900px) {
   .split { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 1.5rem; }
   .split-even { grid-template-columns: 1fr 1fr; }
+  .split-even.stretch { align-items: stretch; } /* a 2x2 of cards: each row's pair shares a height */
   .center { max-width: 40rem; margin-inline: auto; }
 }
