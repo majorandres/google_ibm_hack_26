@@ -1,0 +1,282 @@
+{
+  "_meta": {
+    "project": "RideRecord (hackathon)",
+    "compiled": "2026-11-13",
+    "notes": [
+      "evidence[] = real, cited facts for the pitch and About page. Paraphrased; follow the URL for the original.",
+      "providers[] and complaint_channels[] = public agency info. Fields marked TODO_VERIFY were not confirmed and must be checked before showing them as real.",
+      "Synthetic trip data is generated separately by generate_synthetic_trips.py and must always be labeled 'Demo data, not real riders'."
+    ]
+  },
+
+  "evidence": [
+    {
+      "id": "ev-mi-disability-share",
+      "claim": "About 1 in 5 people in Michigan have a disability; transportation resources are not always available to them.",
+      "publisher": "Metromode / Disability Rights Michigan",
+      "url": "https://metromodemedia.com/?p=25893",
+      "use": "problem slide headline stat"
+    },
+    {
+      "id": "ev-detroit-disability-count",
+      "claim": "More than 128,000 Detroiters, roughly one in five residents, have at least one disability.",
+      "publisher": "Detroit Metro Times",
+      "url": "https://www.metrotimes.com/news/detroit-launches-same-day-paratransit-service-after-years-of-complaints-and-disruption-39672600/",
+      "use": "problem slide"
+    },
+    {
+      "id": "ev-rideshare-not-required",
+      "claim": "Uber and other rideshare programs are not required by federal law to be accessible.",
+      "publisher": "Metromode / Disability Rights Michigan",
+      "url": "https://metromodemedia.com/?p=25893",
+      "use": "why paratransit matters"
+    },
+    {
+      "id": "ev-detroit-complaints-history",
+      "claim": "Riders and advocates complained for years about missed pickups, long waits and poor customer service; in 2022 riders urged council to reject a ~$50M Transdev contract; in 2023, facing a shutdown, the mayor awarded short-term contracts to four local companies.",
+      "publisher": "Detroit Metro Times",
+      "url": "https://www.metrotimes.com/news/detroit-launches-same-day-paratransit-service-after-years-of-complaints-and-disruption-39672600/",
+      "use": "history slide"
+    },
+    {
+      "id": "ev-federal-warning",
+      "claim": "The federal government warned Detroit it was violating federal law by failing to fully fund paratransit.",
+      "publisher": "CBS News Detroit (citing The Detroit News)",
+      "url": "https://www.cbsnews.com/detroit/news/detroit-mayor-pledging-to-help-disabled-who-need-rides",
+      "use": "legal stakes"
+    },
+    {
+      "id": "ev-doj-testimony",
+      "claim": "Blind Detroit riders told the Department of Justice about chronically late drivers who left them in the cold or dropped them at the wrong location, and said officials ignored their concerns for years.",
+      "publisher": "Detroit Metro Times",
+      "url": "https://www.metrotimes.com/news/blind-detroiters-recall-paratransit-service-horror-stories-with-dept-of-justice-31891924/",
+      "use": "human story"
+    },
+    {
+      "id": "ev-ddot-now",
+      "claim": "DDOT launched 'DDOT Now' same-day paratransit in June 2025: trips bookable about one hour ahead, $2.50 fare, same service area; DDOT says on-time performance is at least 98% for each provider and publishes a performance dashboard.",
+      "publisher": "Mass Transit Magazine / City of Detroit; WDET",
+      "url": "https://www.masstransitmag.com/bus/paratransit/press-release/55297648/city-of-detroit-detroit-dot-launches-same-day-paratransit-service",
+      "use": "fairness: things are improving, and agency data is self-reported"
+    },
+    {
+      "id": "ev-ridership-doubling",
+      "claim": "Detroit paratransit ridership nearly doubled, according to DDOT (reported August 2025).",
+      "publisher": "WDET Detroit Evening Report",
+      "url": "https://play.cdnstream1.com/s/wdet/the-detroit-evening-repo-0780e4/paratransit-ridership-in-b9bf68",
+      "use": "growing demand"
+    },
+    {
+      "id": "ev-borderless-paratransit",
+      "claim": "A February 18, 2026 coalition letter to Mayor Mary Sheffield (including Transportation Riders United and the Greater Detroit Agency for the Blind & Visually Impaired) called for borderless paratransit so riders don't have to transfer at the city limit.",
+      "publisher": "Transportation Riders United",
+      "url": "https://www.detroittransit.org/wp-content/uploads/2026/03/DDOT-coalition-letter-to-Mayor-2-2026.pdf",
+      "use": "cross-provider gap"
+    },
+    {
+      "id": "ev-rta-single-county",
+      "claim": "In the RTA region, 85% of trips on existing transit services begin and end within a single county; riders face gaps in opt-out communities and long waits where providers meet, and want standardized eligibility.",
+      "publisher": "Regional Transit Authority of Southeast Michigan, Mobility 4 All (2025)",
+      "url": "https://www.rtamichigan.org/app/uploads/2026/01/RTA-M4A-Executive-Summary_12152025_ADA.pdf",
+      "use": "cross-provider gap"
+    },
+    {
+      "id": "ev-smart-new-software",
+      "claim": "SMART announced new scheduling software with push notifications and real-time tracking; paratransit riders can manage trips through an app (January 2026).",
+      "publisher": "KISS FM Detroit",
+      "url": "https://kissfmdetroit.com/2026/01/06/smart-plans-micro-transit-expansion-to-serve-1-9-million-metro-detroit-residents/",
+      "use": "competitive landscape: agency apps manage trips, but don't give riders an independent record across providers"
+    },
+    {
+      "id": "ev-farmington-hills-nemt",
+      "claim": "A Farmington Hills man who uses a powered wheelchair said repeated failures of his insurance-covered medical transportation caused him to miss nearly a dozen doctor's appointments in 2026: last-minute cancellations, vans that couldn't fit his chair, and a return ride that never came. The ride company pointed to its third-party providers and his insurer; the insurer cited privacy rules.",
+      "publisher": "WDIV ClickOnDetroit (March 24, 2026)",
+      "url": "https://www.clickondetroit.com/news/local/2026/03/24/medical-transportation-failures-leave-farmington-hills-man-with-disabilities-stranded-for-doctors-visits",
+      "use": "demo hook"
+    },
+    {
+      "id": "ev-oag-nemt-audit",
+      "claim": "Michigan's Office of the Auditor General has an in-progress audit of Medicaid non-emergency medical transportation; NEMT expenditures totaled $160.5M from Oct 1, 2024 to Mar 31, 2026; estimated release late 2026.",
+      "publisher": "Michigan Office of the Auditor General",
+      "url": "https://audgen.michigan.gov/in-progress/medicaid-non-emergency-medical-transportation-services/",
+      "use": "why now"
+    },
+    {
+      "id": "ev-prior-nemt-audit",
+      "claim": "A prior audit by Michigan's Office of the Auditor General found the state's Medicaid non-emergency transportation system not effective.",
+      "publisher": "FOX 47 News",
+      "url": "https://www.fox47news.com/neighborhoods/state-capitol/audit-finds-mdhhs-non-emergency-transportation-system-ineffective",
+      "use": "history"
+    },
+    {
+      "id": "ev-iosco-rural",
+      "claim": "In a 2025 study of rural Iosco County, 26% of respondents experienced care disruptions related to transportation and 9.5% had medical care delayed or cancelled.",
+      "publisher": "Michigan Journal of Public Health (GVSU)",
+      "url": "https://scholarworks.gvsu.edu/mjph/vol12/iss1/5",
+      "use": "rural angle"
+    },
+    {
+      "id": "ev-complaints-unreported",
+      "claim": "Patients and advocates say Medicaid ride problems often go unreported or complaints are ignored.",
+      "publisher": "Michigan Public / KFF Health News (2022)",
+      "url": "https://www.michiganpublic.org/2022-01-12/medicaid-pays-millions-for-patient-transportation-sometimes-the-ride-never-comes",
+      "use": "why rider-side records matter"
+    },
+    {
+      "id": "ev-driver-wages",
+      "claim": "DDOT driver pay started at $19/hour vs. $27/hour at SMART, contributing to high turnover (2025).",
+      "publisher": "Transportation Riders United, 2025 Detroit Transit Policy Platform",
+      "url": "https://www.detroittransit.org/wp-content/uploads/2025/05/2025-Detroit-Transit-Policy-Platform.pdf",
+      "use": "root causes (honest framing)"
+    },
+    {
+      "id": "ev-cfr-37-131f",
+      "claim": "49 CFR 37.131(f) prohibits capacity constraints in ADA paratransit, including operational patterns with substantial numbers of significantly untimely pickups, trip denials or missed trips, and trips with excessive trip lengths. The regulations do not define 'substantial.'",
+      "publisher": "eCFR; U.S. DOT research (ROSA P)",
+      "url": "https://ecfr.io/Title-49/Section-37.131",
+      "use": "legal hook"
+    },
+    {
+      "id": "ev-hold-times",
+      "claim": "Excessive telephone hold times for reserving trips are among the operational practices treated as capacity constraints.",
+      "publisher": "National Academies (TCRP)",
+      "url": "https://nap.nationalacademies.org/read/24766/chapter/8",
+      "use": "why we log hold time"
+    },
+    {
+      "id": "ev-fta-form-otp",
+      "claim": "The FTA Civil Rights Complaint Form includes a section for paratransit on-time performance complaints and asks for specific dates and times; FTA encourages riders to first file with their local transit agency.",
+      "publisher": "Federal Transit Administration",
+      "url": "https://www.transit.dot.gov/sites/fta.dot.gov/files/2022-11/Civil-Rights-Complaint-Form-LP-Alternate.pdf",
+      "use": "why our data format matters"
+    }
+  ],
+
+  "providers": [
+    {
+      "id": "ddot-paratransit",
+      "name": "DDOT Paratransit",
+      "type": "ada_paratransit",
+      "region": "City of Detroit",
+      "info_phone": "(313) 833-8268",
+      "complaint_channel_id": "ddot-ada",
+      "escalation_channel_id": "fta-ocr",
+      "source": "https://detroitmi.gov/taxonomy/term/6646"
+    },
+    {
+      "id": "ddot-now",
+      "name": "DDOT Now (same-day paratransit)",
+      "type": "ada_paratransit_same_day",
+      "region": "City of Detroit (same area as DDOT paratransit)",
+      "booking_phone": "313-570-6845",
+      "booking_hours": "Calls 6 a.m.-6 p.m.; trips 6 a.m.-7 p.m., Mon-Sat",
+      "fare_usd": 2.50,
+      "notes": "Book as little as ~1 hour ahead; availability limited",
+      "complaint_channel_id": "ddot-ada",
+      "escalation_channel_id": "fta-ocr",
+      "source": "https://www.metrotimes.com/news/detroit-launches-same-day-paratransit-service-after-years-of-complaints-and-disruption-39672600/"
+    },
+    {
+      "id": "smart-ada",
+      "name": "SMART ADA Paratransit",
+      "type": "ada_paratransit",
+      "region": "Eligibility within Wayne, Oakland, Macomb and Monroe counties",
+      "complaint_channel_id": "smart-TODO_VERIFY",
+      "escalation_channel_id": "fta-ocr",
+      "source": "https://autismallianceofmichigan.org/provider/suburban-mobility-authority-for-regional-transportation-smart"
+    },
+    {
+      "id": "cata-paratransit",
+      "name": "CATA Paratransit (Lansing)",
+      "type": "ada_paratransit",
+      "region": "Greater Lansing",
+      "complaint_channel_id": "cata-ada",
+      "escalation_channel_id": "fta-ocr",
+      "source": "https://www.cata.org/sites/default/files/2026-04/ADA_Complaint_Form_013118_Fillable.pdf"
+    },
+    {
+      "id": "modivcare-mi",
+      "name": "Modivcare (Michigan Medicaid NEMT)",
+      "type": "medicaid_nemt",
+      "region": "Statewide (by plan/county)",
+      "notes": "Schedules non-emergency Medicaid transportation; urgent/same-day trips bookable 24/7",
+      "complaint_channel_id": "medicaid-plan-grievance",
+      "source": "https://www.modivcare.com/facilities/mi"
+    },
+    {
+      "id": "saferide-mi",
+      "name": "SafeRide (via Medicaid health plan)",
+      "type": "medicaid_nemt",
+      "region": "Varies by health plan",
+      "notes": "Used by at least one Michigan Medicaid plan (Priority Health) per news reporting",
+      "complaint_channel_id": "medicaid-plan-grievance",
+      "source": "https://www.clickondetroit.com/news/local/2026/03/29/he-need-to-get-to-doctors-appointments-but-oakland-county-man-says-transportation-is-failing-him"
+    }
+  ],
+
+  "complaint_channels": [
+    {
+      "id": "ddot-ada",
+      "name": "DDOT ADA Coordinator, Compliance Division",
+      "phone": "313-316-2793",
+      "tty": "711",
+      "mail": "Detroit Department of Transportation, ATTN: ADA Coordinator, Compliance Division, 100 Mack Ave., Detroit, MI 48201",
+      "form": "ADA Complaint Form linked from the DDOT ADA page",
+      "deadline_days": 180,
+      "deadline_note": "DDOT investigates ADA complaints received within 180 days of the alleged incident",
+      "source": "https://detroitmi.gov/taxonomy/term/6646"
+    },
+    {
+      "id": "fta-ocr",
+      "name": "Federal Transit Administration, Office of Civil Rights",
+      "online_form": "https://ftawebprod.fta.dot.gov/OCF/OnlineComplaintForm/CreateOnlineComplaintForm",
+      "email": "FTA.ADAAssistance@dot.gov",
+      "phone": "1-888-446-4511",
+      "mail": "Federal Transit Administration, Office of Civil Rights, Attention: Complaint Team, East Building, 5th Floor - TCR, 1200 New Jersey Ave SE, Washington, DC 20590",
+      "deadline_days": 180,
+      "notes": "FTA encourages filing with the local transit agency first",
+      "source": "https://www.transit.dot.gov/how-do-i-submit-complaint-regarding-public-transit-agency%E2%80%99s-failure-comply-americans-disabilities"
+    },
+    {
+      "id": "cata-ada",
+      "name": "CATA Paratransit Supervisor",
+      "phone": "517-394-1100",
+      "email": "paratransit@cata.org",
+      "mail": "Capital Area Transportation Authority, 4615 Tranter Street, Lansing, MI 48910",
+      "source": "https://www.cata.org/sites/default/files/2026-04/ADA_Complaint_Form_013118_Fillable.pdf"
+    },
+    {
+      "id": "tcata-ada",
+      "name": "Twin Cities Area Transportation Authority ADA Coordinator (Benton Harbor)",
+      "phone": "269-927-2268",
+      "email": "office@tcatabus.org",
+      "mail": "275 East Wall Street, Benton Harbor, MI 49022",
+      "deadline_days": 180,
+      "source": "https://mywaythere.org/downloads/ada_complaint_form_updated_9_2024_pdf.pdf"
+    },
+    {
+      "id": "mdcr",
+      "name": "Michigan Department of Civil Rights",
+      "phone": "1-800-482-3604",
+      "notes": "For disability discrimination complaints against businesses and non-state organizations",
+      "source": "https://www.michigan.gov/disabilityresources/complaints"
+    },
+    {
+      "id": "medicaid-plan-grievance",
+      "name": "Rider's Medicaid health plan, member grievance process",
+      "notes": "TODO_VERIFY: use the member services number on the rider's plan ID card; confirm state-level escalation path before showing as real",
+      "source": "TODO_VERIFY"
+    },
+    {
+      "id": "smart-TODO_VERIFY",
+      "name": "SMART customer service / ADA complaint",
+      "notes": "TODO_VERIFY on smartbus.org before the demo; until then show 'Contact SMART customer service' only",
+      "source": "TODO_VERIFY"
+    }
+  ],
+
+  "demo_zip_codes": {
+    "detroit": ["48201", "48202", "48204", "48205", "48206", "48207", "48208", "48209", "48210", "48211", "48212", "48213", "48214", "48215", "48219", "48221", "48223", "48224", "48227", "48228", "48234", "48235", "48238"],
+    "suburban": ["48335", "48075", "48126", "48180", "48093", "48066"]
+  }
+}

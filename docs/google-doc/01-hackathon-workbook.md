@@ -2,7 +2,7 @@
      Source: https://docs.google.com/document/d/1JfQvlIcYmX3VJww7KUwIZINZ9PYFhvXmoMTAL6vWr4Q/edit?tab=t.0
      The Google Doc is the source of truth; this file is a snapshot. -->
 
-> **Warning for readers and agents:** the filled-in answers in this workbook ("OUR ANSWER", "OUR PROBLEM STATEMENT", "OUR VALUE PROPOSITION", the Design for AI answers, the repo and video URLs, the submission time) describe **BusPulse**, a bus-capacity tracker for commuting students. That is sample text, not this team's project. The repo URL and video URL in it are not real. Our project is the shift-aware commute check described in `../why-we-are-building-this.md`. The guidance text, checkpoints, rules and submission checklist in this workbook do apply to us.
+> **Warning for readers and agents:** the filled-in answers in this workbook ("OUR ANSWER", "OUR PROBLEM STATEMENT", "OUR VALUE PROPOSITION", the Design for AI answers, the repo and video URLs, the submission time) describe **BusPulse**, a bus-capacity tracker for commuting students. That is sample text, not this team's project. The repo URL and video URL in it are not real. Our project is RideRecord, described in `../why-we-are-building-this.md`. The guidance text, checkpoints, rules and submission checklist in this workbook do apply to us.
 
 # How to Win a Hackathon
 

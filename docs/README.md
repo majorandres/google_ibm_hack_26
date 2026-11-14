@@ -1,87 +1,77 @@
 # Project docs
 
-Context for anyone, human or coding agent, picking up this repo. Read `why-we-are-building-this.md` first.
-
-These files are a snapshot of the team's Google Doc ("MDevFest") taken on **November 13, 2026, about 12:10 PM ET**. The Google Doc stays the source of truth. If something here disagrees with it, the Google Doc wins and this folder needs a refresh.
+Context for anyone, human or coding agent, picking up this repo.
 
 ## What we are building
 
-A shift-aware commute check for the Michigan DevFest AI Hackathon 2026 (Mobility track, team of three). A worker without a car enters a job's location and shift, and the app answers whether they can make the round trip by bus, shows why, and offers a backup plan when the answer is no.
+**RideRecord**, for the Michigan DevFest AI Hackathon 2026 (Mobility track, team of three). Riders with disabilities who depend on paratransit and Medicaid rides log each trip by tap or by voice, turn logged problems into a complaint addressed to the right office, and feed an anonymized reliability dashboard for advocates.
 
-## Files
+The team pivoted to RideRecord on the afternoon of November 13, 2026. Before that the repo was scaffolded for a different idea, a shift-aware commute check. Anything that still mentions "Commute Check" is left over from that.
+
+## Read in this order
 
 | File | What it is |
 |---|---|
-| `ci-cd.md` | The GitHub Actions workflows: what each step of CI and of the deploy does, the one-time setup, and how they share the app with Terraform. |
-| `why-we-are-building-this.md` | The reason for the project: the person, the problem, the evidence, what the product does and does not do. Start here. |
-| `google-doc/01-hackathon-workbook.md` | The organizers' team workbook. **Its filled-in answers are sample text about a different app ("BusPulse"), not ours.** See the warning at the top of that file. |
-| `google-doc/02-research-report.md` | Research on Michigan mobility problems, with sources, a comparison of candidate problems, the data and APIs available, and which statistics are safe to quote. |
-| `google-doc/03-tech-resources.md` | Platforms, credits, deadlines, judging criteria and getting-started links for IBM watsonx, Google Cloud and Lovable. |
-| `google-doc/04-business-model-canvas.md` | The nine-block business model canvas for the commute check. |
+| `../michigan-accessible-transit-problem-statement.md` | **The problem, the full solution and the 17-week plan.** Source of truth for what RideRecord is. |
+| `../riderecord-hackathon-plan.md` | **What we build today.** Scope (P0/P1/P2), architecture, prompts, routing table, pattern flag, demo script. |
+| `why-we-are-building-this.md` | One-page version: the person, the evidence, what we do and do not claim. |
+| `../README.md` | What is built, which tool does what, how to run and deploy. |
+| `hackathon-requirements.md` | Every hackathon rule and judging criterion, written as a checklist. |
+| `ci-cd.md` | The GitHub Actions workflows and their one-time setup. |
+| `../seed_data.json` | Cited evidence, real providers and real complaint channels. Entries marked `TODO_VERIFY` are not confirmed. |
+
+### Google Doc exports (`google-doc/`)
+
+Snapshots of the team's Google Doc ("MDevFest") from November 13, about 12:10 PM ET, **before the pivot**.
+
+| File | Still applies? |
+|---|---|
+| `01-hackathon-workbook.md` | **Yes, the rules and checklists.** Its filled-in answers are sample text about another app ("BusPulse"). |
+| `03-tech-resources.md` | **Yes.** Platforms, credits, deadlines, judging criteria. |
+| `02-research-report.md` | **Background only.** Research behind the earlier commute-check idea. It does cover disability mobility and Medicaid rides as candidate problems. |
+| `04-business-model-canvas.md` | **No.** The canvas for the commute check. RideRecord has no canvas yet. |
 
 ## Status
 
-### Done
+### Built and checked locally (November 13, about 3:45 PM ET)
 
-- **Problem research.** Five lines of research were combined into one report (`google-doc/02-research-report.md`). Its conclusion is that getting to work without a car in Metro Detroit is the strongest problem for this team.
-- **Business model canvas.** Filled in for the commute check (`google-doc/04-business-model-canvas.md`). Revenue streams and partners are assumptions, not validated.
-- **Screen mockup.** Four screens (check a job, verdict, backup plan, employer view) on a design canvas outside this repo: https://claude.ai/artifact/5b4XhRDYymMx57VXg4EkXb. The link is private to its owner unless shared. Bus times, margins and applicant counts in it are sample data.
-- **Repo created.** `google_ibm_hack_26` on GitHub, with a README and these docs.
-- **IBM Cloud access checked** (November 13, about 12:15 PM ET). The hackathon account (`watsonx`) has one resource group, `Default`, on which the team has Viewer only. New service instances cannot be created; work goes into the pre-provisioned ones:
-
-  | Instance | Region | Access |
-  |---|---|---|
-  | Code Engine | us-south | Manager: can deploy apps into the existing project |
-  | watsonx.ai (WML / Studio) | us-south | Writer: can call models |
-  | Cloudant | us-south | Administrator |
-  | Object Storage | global | Administrator |
-  | Speech to Text / Text to Speech | us-south | Writer |
-  | watsonx Orchestrate | ca-tor | Writer |
-  | watsonx.governance | us-south | Was still provisioning |
-  | Container Registry | — | Manager |
-
-  The only Granite chat model enabled in us-south is `ibm/granite-4-h-small`. No Granite Guardian model is listed. The account has one watsonx project.
-- **Repo scaffolded for development.** Run instructions are in the root `README.md`. This is scaffolding only; none of the product features exist yet.
-  - `backend/`: FastAPI on Python 3.12, managed with uv. Has `/api/health` and `/api/granite/ask`, a smoke-test endpoint for Granite through the watsonx Python SDK.
-  - `frontend/`: React, TypeScript and Tailwind on Vite. A placeholder page that shows backend status.
-  - `infra/`: Terraform for IBM Cloud. Creates a Container Registry namespace, two Code Engine secrets and one Code Engine app inside the existing project.
-  - `Dockerfile`: one image in which FastAPI serves both the API and the built frontend, so there is a single app to deploy.
-  - `scripts/deploy.sh`: builds and pushes the image, then applies Terraform.
-  - Checked: backend tests and lint pass, the frontend builds, `terraform validate` succeeds.
-- **CI/CD added** (`.github/workflows/`, explained in `ci-cd.md`). CI lints, tests and builds the backend, frontend, Terraform and Docker image on every pull request. Every push to `main` runs CI and then deploys to Code Engine. The frontend lockfile was out of sync with `package.json` (`npm ci` failed) and was regenerated.
-
-### Decided
-
-- **Tech stack.** Python (FastAPI) backend, React front end, IBM Granite through the watsonx Python SDK, hosted on IBM Code Engine with infrastructure in Terraform. Google Cloud Run and Lovable, which `google-doc/03-tech-resources.md` leaned toward, are not used. watsonx Orchestrate is not used.
-
-### Deadline
-
-Submissions close at **6:00 PM ET on November 13, 2026**, with pitches at 6:30 PM and winners at 7:30 PM. Aim to submit at 5:45 PM. The IBM competition page separately lists Sunday, November 15 at 2:00 PM ET; the team treats that as a backstop only if an organizer confirms it.
-
-### Not decided yet
-
-- **Which Google tool the product uses.** The stack above has no Google component yet. Google's transit routing is the candidate; the backend has an optional `GOOGLE_MAPS_API_KEY` setting for it. The workbook's "Our stack" section is still empty.
-- **Product name.** The mockup uses "Commute Check" as a placeholder.
-- **Who the pitch says it is for.** Proposed, not agreed: build and demo for one Detroit worker, and describe the benefit as reaching any Michigan worker without reliable transportation. See `why-we-are-building-this.md`.
-- **Workbook answers.** The problem statement, value proposition, Design for AI answers, team roles, judging map, build plan, video script and pitch in the workbook have not been written for the commute check.
+- **Backend** (`backend/`): FastAPI with `/api/trips`, `/api/extract`, `/api/voice`, `/api/complaints`, `/api/stats`, `/api/providers`, `/api/health`. 19 tests pass; ruff is clean.
+- **Frontend** (`frontend/`): four screens (Log a ride, Talk, Complaints, Dashboard). Builds and lints clean. Clicked through in a browser with no keys set: logging a ride, drafting a complaint (routed to the DDOT ADA Coordinator, "162 days left to file"), the typed fallback on Talk, and the dashboard with its two planted flags.
+- **Infra** (`infra/`): Terraform for Cloud Run, Firestore, BigQuery, Artifact Registry and Secret Manager. `terraform validate` passes.
+- **Synthetic data**: with seed 42 the pattern flag fires on exactly the two planted spikes, and return trips fail more than 1.5 times as often as outbound. A test asserts both.
 
 ### Not verified yet
 
-These came out of the research as open risks. Check each one before building on it.
+Check each one before building on it or saying it in the pitch.
 
-- Whether Google's transit routing returns DDOT and SMART trips late at night (for example, leaving a plant at 11:30 PM). Nobody has run a test query.
-- Whether the deploy works end to end. The Docker image has not been built and nothing has been deployed. The first run of `scripts/deploy.sh` will show whether the team's role can create a Container Registry namespace.
-- Whether the GitHub Actions workflows pass on GitHub. Their steps were run locally (except the Docker build), but neither workflow has run on GitHub yet. The deploy workflow also needs `scripts/deploy.sh` to have run once and the `IBMCLOUD_API_KEY` repository secret.
-- Whether a live call to Granite succeeds. It needs an IBM Cloud API key in `.env`, which had not been created when this was written.
-- The current DDOT on-time figures. The research had January 2026 numbers only.
+- **Nothing has run against a real cloud service.** No live call to Granite, to Watson Speech to Text, to Firestore or to BigQuery. Tests replace those calls.
+- **Speech to Text may not accept the IBM Cloud API key.** `speech.py` sends `IBMCLOUD_API_KEY` to the STT instance; if that is refused, put the instance's own key in `STT_API_KEY`.
+- **Microphone recording has not been tried.** The browser records WebM/Opus and the backend passes that content type to Watson. If Watson rejects it, upload a `.wav` (the Talk screen has an upload field).
+- **A Granite failure is silent.** With a wrong key, region or model ID the app quietly uses the complaint template and the manual form, while `/api/health` still says `watsonx_configured: true`. After deploying, draft one complaint and check the screen says "Drafted by IBM Granite" before saying so in the pitch.
+- **Demo the microphone in Chrome.** Safari on iPhone records `audio/mp4`, which Watson Speech to Text does not accept.
+- **Nothing is deployed.** `scripts/deploy.sh` has not run. The team needs a Google Cloud project with billing; none is named in this repo.
+- **The GitHub Actions workflows have not run** since the rewrite. The Docker image has not been built.
+- **No accessibility test.** The markup is semantic, labeled and keyboard-reachable by design, but nobody has run axe, VoiceOver or TalkBack on it. The plan calls this a release gate.
+- **Two complaint channels are unconfirmed** (`TODO_VERIFY` in `seed_data.json`): SMART, and the Medicaid health plan grievance path. The app shows a "not confirmed" message for both.
+- **No rider or advocate has seen any of this.**
+
+### Decided
+
+- **Stack.** FastAPI and React in one container on **Google Cloud Run**; trips in **Firestore**; dashboard aggregates in **BigQuery**; **IBM Granite** on watsonx.ai for extraction and drafting; **IBM Watson Speech to Text** for voice. IBM Code Engine, which the old scaffold deployed to, is no longer used.
+- **Every cloud service has a local stand-in** so the demo survives a failure: memory for Firestore, `trips.csv` for BigQuery, a fixed template for the complaint draft, typing for speech.
+- **Demo account only.** One fictional rider, no sign-in. The API trusts the `rider_id` it is sent, which is acceptable only because there is no real data.
+
+### Deadline
+
+Submissions close at **6:00 PM ET on November 13, 2026**, with pitches at 6:30 PM and winners at 7:30 PM. Aim to submit at 5:45 PM. The IBM competition page separately lists Sunday, November 15 at 2:00 PM ET; treat that as a backstop only if an organizer confirms it.
 
 ## Rules that apply to this repo
 
-From the organizers' workbook and keynote:
+From the organizers' workbook and keynote. `hackathon-requirements.md` has the full checklist.
 
 - The repo must be public for submission. Never commit API keys or other secrets. Use environment variables.
-- Use only data the team is allowed to use. No personal, client, confidential or social media data. Keep a list of every public data source.
-- Record which AI tools and models were used, including coding assistants. Judges ask. So far: the research, the canvas, the mockup, these docs and the repo scaffolding were produced with Claude.
+- Use only data the team is allowed to use. No personal, client, confidential or social media data. **For RideRecord this means no real rider data, ever, in this build.** Keep a list of every public data source (root `README.md`, "Data sources").
+- Record which AI tools and models were used, including coding assistants (root `README.md`, "AI tools used").
 - Hackathon cloud accounts close after the event. Push code to GitHub before then.
 
 ## Judging

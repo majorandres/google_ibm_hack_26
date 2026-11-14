@@ -1,96 +1,173 @@
 terraform {
   required_version = ">= 1.5"
   required_providers {
-    ibm = {
-      source  = "IBM-Cloud/ibm"
-      version = "~> 1.70"
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 6.0"
     }
   }
 }
 
-provider "ibm" {
-  ibmcloud_api_key = var.ibmcloud_api_key
-  region           = var.region
+provider "google" {
+  project = var.project_id
+  region  = var.region
 }
 
-# The hackathon account only grants Viewer on the resource group, so we cannot
-# create service instances. Everything below lives inside instances IBM
-# pre-provisioned for the team.
-
-data "ibm_resource_group" "default" {
-  name = "Default"
-}
-
-data "ibm_resource_instance" "code_engine" {
-  name              = var.code_engine_project_name
-  resource_group_id = data.ibm_resource_group.default.id
-  service           = "codeengine"
-}
+# Google Cloud is the app and data layer: Cloud Run hosts the app, Firestore
+# holds trips, BigQuery aggregates the synthetic dashboard data. The IBM side
+# (watsonx.ai, Speech to Text) is pre-provisioned by the hackathon and reached
+# with an API key, so nothing IBM is managed here.
 
 locals {
-  project_id = data.ibm_resource_instance.code_engine.guid
-  image      = "${var.registry}/${var.cr_namespace}/${var.app_name}:${var.image_tag}"
+  image          = "${var.region}-docker.pkg.dev/${var.project_id}/${var.app_name}/${var.app_name}:${var.image_tag}"
+  bigquery_table = "${var.project_id}.${google_bigquery_dataset.riderecord.dataset_id}.trips"
 }
 
-resource "ibm_cr_namespace" "app" {
-  name              = var.cr_namespace
-  resource_group_id = data.ibm_resource_group.default.id
+resource "google_project_service" "apis" {
+  for_each = toset([
+    "artifactregistry.googleapis.com",
+    "bigquery.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    "firestore.googleapis.com",
+    "iam.googleapis.com",
+    "run.googleapis.com",
+    "secretmanager.googleapis.com",
+  ])
+  service            = each.key
+  disable_on_destroy = false
 }
 
-# Lets Code Engine pull the image from IBM Container Registry.
-resource "ibm_code_engine_secret" "registry" {
-  project_id = local.project_id
-  name       = "${var.app_name}-registry"
-  format     = "registry"
-  data = {
-    server   = var.registry
-    username = "iamapikey"
-    password = var.ibmcloud_api_key
-  }
+resource "google_artifact_registry_repository" "app" {
+  repository_id = var.app_name
+  location      = var.region
+  format        = "DOCKER"
+  depends_on    = [google_project_service.apis]
 }
 
-# Runtime secrets, exposed to the app as environment variables.
-resource "ibm_code_engine_secret" "app" {
-  project_id = local.project_id
-  name       = "${var.app_name}-env"
-  format     = "generic"
-  data = {
-    IBMCLOUD_API_KEY    = var.ibmcloud_api_key
-    GOOGLE_MAPS_API_KEY = var.google_maps_api_key
-  }
+# A project has one "(default)" database. If yours already has one:
+#   terraform import google_firestore_database.default "(default)"
+resource "google_firestore_database" "default" {
+  name        = "(default)"
+  location_id = var.firestore_location
+  type        = "FIRESTORE_NATIVE"
+  depends_on  = [google_project_service.apis]
 }
 
-resource "ibm_code_engine_app" "app" {
-  project_id      = local.project_id
-  name            = var.app_name
-  image_reference = local.image
-  image_secret    = ibm_code_engine_secret.registry.name
-  image_port      = 8080
+# scripts/deploy.sh loads the synthetic trips into riderecord.trips with `bq load`.
+resource "google_bigquery_dataset" "riderecord" {
+  dataset_id  = "riderecord"
+  location    = "US"
+  description = "SYNTHETIC demo trips for fictional providers. Not real riders."
+  depends_on  = [google_project_service.apis]
+}
 
-  scale_min_instances = var.min_instances
-  scale_max_instances = 2
-  scale_cpu_limit     = "0.5"
-  scale_memory_limit  = "1G"
+resource "google_service_account" "app" {
+  account_id   = "${var.app_name}-run"
+  display_name = "RideRecord Cloud Run service"
+}
 
-  run_env_variables {
-    type      = "secret_full_reference"
-    reference = ibm_code_engine_secret.app.name
+resource "google_project_iam_member" "app" {
+  for_each = toset([
+    "roles/datastore.user",      # read and write trips in Firestore
+    "roles/bigquery.dataViewer", # read the synthetic trips table
+    "roles/bigquery.jobUser",    # run the dashboard query
+  ])
+  project = var.project_id
+  role    = each.key
+  member  = google_service_account.app.member
+}
+
+resource "google_secret_manager_secret" "ibm_api_key" {
+  secret_id = "${var.app_name}-ibmcloud-api-key"
+  replication {
+    auto {}
   }
-  run_env_variables {
-    type  = "literal"
-    name  = "WATSONX_URL"
-    value = var.watsonx_url
-  }
-  run_env_variables {
-    type  = "literal"
-    name  = "WATSONX_PROJECT_ID"
-    value = var.watsonx_project_id
-  }
-  run_env_variables {
-    type  = "literal"
-    name  = "WATSONX_MODEL_ID"
-    value = var.watsonx_model_id
+  depends_on = [google_project_service.apis]
+}
+
+resource "google_secret_manager_secret_version" "ibm_api_key" {
+  secret      = google_secret_manager_secret.ibm_api_key.id
+  secret_data = var.ibmcloud_api_key
+}
+
+resource "google_secret_manager_secret_iam_member" "app" {
+  secret_id = google_secret_manager_secret.ibm_api_key.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = google_service_account.app.member
+}
+
+resource "google_cloud_run_v2_service" "app" {
+  name                = var.app_name
+  location            = var.region
+  deletion_protection = false
+
+  template {
+    service_account = google_service_account.app.email
+    scaling {
+      min_instance_count = var.min_instances
+      max_instance_count = 2
+    }
+    containers {
+      image = local.image
+      ports {
+        container_port = 8080
+      }
+      resources {
+        limits = { cpu = "1", memory = "1Gi" }
+      }
+      env {
+        name  = "USE_FIRESTORE"
+        value = "true"
+      }
+      env {
+        name  = "BIGQUERY_TABLE"
+        value = local.bigquery_table
+      }
+      env {
+        name  = "WATSONX_URL"
+        value = var.watsonx_url
+      }
+      env {
+        name  = "WATSONX_PROJECT_ID"
+        value = var.watsonx_project_id
+      }
+      env {
+        name  = "WATSONX_MODEL_ID"
+        value = var.watsonx_model_id
+      }
+      env {
+        name  = "STT_URL"
+        value = var.stt_url
+      }
+      # shortcut: plain env var, visible to project viewers; move to Secret Manager after the hackathon.
+      env {
+        name  = "STT_API_KEY"
+        value = var.stt_api_key
+      }
+      env {
+        name = "IBMCLOUD_API_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.ibm_api_key.secret_id
+            version = "latest"
+          }
+        }
+      }
+    }
   }
 
-  depends_on = [ibm_cr_namespace.app]
+  depends_on = [
+    google_firestore_database.default,
+    google_project_iam_member.app,
+    google_secret_manager_secret_iam_member.app,
+    google_secret_manager_secret_version.ibm_api_key,
+  ]
+}
+
+# Public demo app: anyone with the URL can open it. It holds demo data only.
+resource "google_cloud_run_v2_service_iam_member" "public" {
+  name     = google_cloud_run_v2_service.app.name
+  location = var.region
+  role     = "roles/run.invoker"
+  member   = "allUsers"
 }

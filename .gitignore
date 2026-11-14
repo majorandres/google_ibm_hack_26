@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+key.json
 *.tfvars
 !*.tfvars.example
 
@@ -14,6 +15,9 @@ __pycache__/
 # Node
 node_modules/
 dist/
+
+# Synthetic demo data (python generate_synthetic_trips.py --out trips.csv)
+trips.csv
 
 # Terraform
 .terraform/
