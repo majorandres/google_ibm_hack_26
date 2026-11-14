@@ -408,7 +408,7 @@ export default function Landing() {
         .lp-reveal p { color: var(--muted); font-size: 1.125rem; margin: 0; }
         .lp-phone-wrap { display: flex; justify-content: center; }
         .lp-phone {
-          width: min(100%, 20rem); background: #fff; border: 3px solid var(--ink);
+          width: min(100%, 20rem); background: var(--frost); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 3px solid var(--ink);
           border-radius: 2rem; padding: 2rem 1.5rem; box-shadow: 0 24px 48px -20px rgba(16,24,40,0.25);
         }
         .lp-phone-hi { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; font-size: 1.5rem; font-weight: 700; margin: 0; color: var(--ink); }
@@ -492,7 +492,8 @@ export default function Landing() {
         .lp-pill {
           position: fixed; left: 50%; translate: -50% 0; bottom: max(1.5rem, env(safe-area-inset-bottom)); z-index: 50;
           display: flex; align-items: center; gap: 1.5rem; padding: 0.5rem 0.5rem 0.5rem 0.75rem;
-          background: var(--ink); border-radius: 0.3rem; white-space: nowrap;
+          background: color-mix(in srgb, var(--ink) 86%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+          border-radius: 0.3rem; white-space: nowrap;
         }
         .lp-pill .lp-logo { color: #fff; }
         .lp-pill .lp-logo > span { background: #fff; color: var(--ink); }
@@ -503,7 +504,7 @@ export default function Landing() {
         /* hero: the headline sits in black label blocks */
         .lp-hero { min-height: 82dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4rem 0; }
         .lp-hero h1 { font-weight: 600; line-height: 1.1; }
-        .lp-label { display: inline-block; background: var(--ink); color: #fff; padding: 0.08em 0.3em 0.14em; border-radius: 0.3rem; margin: 0.06em 0; }
+        .lp-label { display: inline-block; background: color-mix(in srgb, var(--ink) 86%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: #fff; padding: 0.08em 0.3em 0.14em; border-radius: 0.3rem; margin: 0.06em 0; }
         .lp-hero h1 .lp-muteword { color: #a3a3a3; }
         .lp-hero-sub { color: var(--ink); font-weight: 600; font-size: clamp(1.25rem, 2.4vw, 1.75rem); line-height: 1.15; letter-spacing: -0.02em; }
         .lp-cta, .lp-step, .lp-stat { border-radius: 0.3rem; }

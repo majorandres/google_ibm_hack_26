@@ -584,6 +584,15 @@
 /* ============================================================
    App effects. Still versions first; motion only where welcome.
    ============================================================ */
+/* Boxes are frosted, not solid: the dot field shows through, blurred, so it melts
+   behind them. At 72% paper the darkest a dot can make the box is #f3f3f3,
+   where muted text is still 7:1. */
+.rr-app, .lp { --frost: color-mix(in srgb, #ffffff 72%, transparent); }
+.rr-app .card, .rr-app .more, .rr-app .record {
+  background-color: var(--frost);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
 .dots { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
 @media (forced-colors: active) { .dots { display: none; } }
 
@@ -608,7 +617,8 @@
   color: var(--color-ink);
   border: 1px solid var(--color-ink);
   border-radius: 0.3rem;
-  background: linear-gradient(var(--color-ink), var(--color-ink)) no-repeat left / 0% 100% var(--color-paper);
+  background: linear-gradient(var(--color-ink), var(--color-ink)) no-repeat left / 0% 100% var(--frost);
+  backdrop-filter: blur(10px);
   cursor: pointer;
 }
 .feature svg { width: 1.25rem; height: 1.25rem; grid-row: 1 / span 2; }

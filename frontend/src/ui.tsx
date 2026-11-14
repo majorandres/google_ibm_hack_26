@@ -41,7 +41,7 @@ export function Logo() {
 
 /**
  * Decorative halftone field behind a whole page: square dots swell and fade in slow
- * waves, pushed along by scroll. Reduced motion draws it once and leaves it still.
+ * waves, and gather under the pointer or finger. Reduced motion draws it once and leaves it still.
  */
 export function DotField() {
   const ref = useRef<HTMLCanvasElement>(null)
@@ -51,17 +51,23 @@ export function DotField() {
     const ctx = canvas?.getContext('2d')
     if (!canvas || !ctx) return
     const GAP = 14
+    const REACH = 2 * 150 ** 2 // how far the pointer's pull spreads
     let raf = 0
+    // Pointer target, and the point that eases toward it so the swell trails like liquid.
+    const target = { x: -9999, y: -9999 }
+    const at = { ...target }
     const draw = (ms: number) => {
       const dpr = window.devicePixelRatio
       const t = ms / 4000
-      const s = window.scrollY / 600
+      at.x += (target.x - at.x) * 0.08
+      at.y += (target.y - at.y) * 0.08
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       ctx.fillStyle = '#d4d4d4' // light enough that muted text over a dot still passes 4.5:1
       for (let y = GAP / 2; y < window.innerHeight; y += GAP) {
         for (let x = GAP / 2; x < window.innerWidth; x += GAP) {
-          const v = Math.sin(x * 0.006 + t + s) + Math.cos(y * 0.008 - t * 0.7 + s * 2) - 0.6
-          if (v > 0) ctx.fillRect(x * dpr, y * dpr, v * 3.5 * dpr, v * 3.5 * dpr)
+          const pull = 1.6 * Math.exp(-((x - at.x) ** 2 + (y - at.y) ** 2) / REACH)
+          const v = Math.min(Math.sin(x * 0.006 + t) + Math.cos(y * 0.008 - t * 0.7) - 0.6 + pull, 1.6)
+          if (v > 0) ctx.fillRect(x * dpr - (v * 1.75 * dpr), y * dpr - (v * 1.75 * dpr), v * 3.5 * dpr, v * 3.5 * dpr)
         }
       }
       if (!reducedMotion()) raf = requestAnimationFrame(draw)
@@ -71,11 +77,17 @@ export function DotField() {
       canvas.height = window.innerHeight * window.devicePixelRatio
       if (reducedMotion()) draw(0)
     }
+    const move = (e: PointerEvent) => {
+      target.x = e.clientX
+      target.y = e.clientY
+    }
     resize()
     if (!reducedMotion()) raf = requestAnimationFrame(draw)
     window.addEventListener('resize', resize)
+    window.addEventListener('pointermove', move, { passive: true })
     return () => {
       window.removeEventListener('resize', resize)
+      window.removeEventListener('pointermove', move)
       cancelAnimationFrame(raf)
     }
   }, [])
