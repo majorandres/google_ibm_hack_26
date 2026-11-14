@@ -56,6 +56,12 @@
      Slightly squared. A record is a document, not a bubble. */
   --radius-field: 0.25rem;
   --radius-record: 0.375rem;
+
+  /* --- motion ------------------------------------------------- */
+  --ease-swift: cubic-bezier(0.23, 1, 0.32, 1);
+  --dur-1: 150ms; /* feedback */
+  --dur-2: 250ms; /* entrances, screen changes */
+  --dur-3: 600ms; /* bars, hero */
 }
 
 @font-face {
@@ -396,8 +402,53 @@
 
 /* ============================================================
    Motion: every animation has a still version.
+   Base styles keep content visible; only a keyframe `from` hides it,
+   so a browser that skips the animation still shows everything.
    ============================================================ */
+.fx-aurora {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.2; /* measured against the hero subtitle; see docs/design-system.md */
+  filter: blur(80px);
+}
+.fx-aurora > * {
+  position: absolute;
+  width: 40vmax;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes rise { from { opacity: 0; translate: 0 0.75rem; } }
+  @keyframes sink { to { opacity: 0; translate: 0 -0.5rem; } }
+  @keyframes grow-x { from { scale: 0 1; } }
+  @keyframes pulse { to { box-shadow: 0 0 0 1rem transparent; } }
+  @keyframes drift { to { translate: 6% 4%; rotate: 8deg; } }
+
+  /* Stagger: set --i to the item's index. Capped so long lists never wait. */
+  .fx-rise { animation: rise var(--dur-2) var(--ease-swift) both; animation-delay: calc(min(var(--i, 0), 8) * 60ms); }
+  .fx-grow { transform-origin: left; animation: grow-x var(--dur-3) var(--ease-swift) both; }
+  .fx-lift { transition: translate var(--dur-1) var(--ease-swift), box-shadow var(--dur-1) var(--ease-swift), background-color var(--dur-1) ease; }
+  .fx-lift:hover { translate: 0 -2px; box-shadow: 0 8px 20px -12px var(--color-ink); }
+  .fx-pulse { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-overdue) 50%, transparent); animation: pulse 1.4s ease-out infinite; }
+  .fx-aurora > * { animation: drift 18s ease-in-out infinite alternate; }
+
+  /* Screen changes (see motion.ts). The active tab slides between positions;
+     the nav renders twice but one copy is always display:none, so the name stays unique. */
+  ::view-transition-old(root) { animation: sink var(--dur-1) var(--ease-swift) both; }
+  ::view-transition-new(root) { animation: rise var(--dur-2) var(--ease-swift) both; }
+  .rr-tab[aria-current='page'] { view-transition-name: active-tab; }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
   *,
   *::before,
   *::after {
@@ -421,6 +472,9 @@
   }
   .deadline > span {
     background-color: Highlight;
+  }
+  .fx-aurora {
+    display: none;
   }
 }
 

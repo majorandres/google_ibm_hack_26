@@ -186,7 +186,7 @@ export default function Complaints({ providers }: { providers: Provider[] }) {
         // Arrives with a short fade and rise so it does not pop in after the wait. Reduced motion stills it (index.css).
         <section
           aria-labelledby="draft-heading"
-          className="record transition-[opacity,translate] duration-250 ease-[cubic-bezier(0.23,1,0.32,1)] starting:translate-y-2 starting:opacity-0"
+          className="record transition-[opacity,translate] duration-(--dur-2) ease-swift starting:translate-y-2 starting:opacity-0"
         >
           <header className="record-head flex-wrap">
             <h2 id="draft-heading">Send it to: {complaint.channel.name}</h2>
