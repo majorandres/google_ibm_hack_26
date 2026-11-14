@@ -474,7 +474,7 @@ export default function Landing() {
         .lp-band h2 { text-shadow: 1px 1px 0 #142c78, 2px 2px 0 #0f2260, 3px 3px 0 #0c1b4d; }
         .lp-band p { text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25); }
         .lp-band-cta:active { box-shadow: 0 1px 0 #a16207; }
-        .lp-band-cta:focus-visible { outline-color: var(--yellow); }
+        .lp a.lp-band-cta:focus-visible { outline-color: var(--yellow); }
         .lp-footer { border-top: 1px solid #e4e7ec; padding: 2rem 0; }
         .lp-footer-inner {
           display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;

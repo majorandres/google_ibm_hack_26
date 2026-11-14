@@ -60,6 +60,7 @@ def granite_is_configured():
 
 @pytest.mark.parametrize(("said", "expected"), CASES, ids=[f"t{i:02d}" for i in range(1, len(CASES) + 1)])
 def test_extraction(said, expected):
+    extract._answers.clear()  # t01 and t02 share a cache key; without this t02 never reaches Granite
     found = extract.extract(said)
     assert found is not None, "Granite's answer did not validate; the rider would get the manual form"
     got = {
