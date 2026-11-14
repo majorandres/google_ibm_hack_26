@@ -86,8 +86,8 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
 
   const incident = result?.incident
   return (
-    <div className="zig space-y-4">
-      <Card icon={Mic} title="Say what happened">
+    <div className="space-y-4">
+      <Card icon={Mic} title="Say what happened" className="center">
       <p className="hint mb-4 mt-0">For example: “My return ride never came and I waited two hours.”</p>
 
       <button type="button" onClick={toggleRecording} disabled={busy} aria-pressed={recording} className={`${button} w-full py-6 text-2xl ${recording ? 'fx-pulse bg-overdue hover:bg-overdue/90' : ''}`}>
@@ -95,6 +95,7 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
       </button>
       </Card>
 
+      <div className="split-even">
       <More summary="Type it instead">
       <form
         className="space-y-2"
@@ -125,6 +126,7 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
         />
       </label>
       </More>
+      </div>
 
       <Status error={status.error}>{status.text}</Status>
       {result && (

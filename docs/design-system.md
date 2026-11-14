@@ -107,6 +107,11 @@ Body floor is 17px. Headings use `clamp()` with negative tracking.
   `--frost` (72% white) with a backdrop blur, so the dots show through softly
   instead of being cut off. The app header and tab bar stay solid, because page
   text scrolls under them.
+- Placement on wide screens (`.split`, `.split-even`, `.center`) — left is what
+  the rider does, right is what supports it (history, where a complaint goes,
+  how a flag is decided), centre is a single focus or the step that finishes
+  the job (the talk button, Save, picking rides before a draft exists). Wide
+  tables and notices span the full width. Phones keep one column.
 - `.tabbar` / `.tab` — thumb-reachable bottom nav, labels always visible.
 - `.built-with` — the quiet IBM credit line.
 

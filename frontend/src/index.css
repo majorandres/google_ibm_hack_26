@@ -657,10 +657,13 @@
   }
 }
 
-/* On wide screens a screen's modules alternate left and right instead of stacking
-   in one centred column. Phones keep the single full-width column. */
-@media (min-width: 768px) {
-  .zig > * { width: 74%; }
-  .zig > :nth-child(even) { margin-left: auto; }
-  .zig .zig > * { width: auto; margin-left: 0; } /* a form nested in a module does not zigzag again */
+/* Placement on wide screens. Left: what the rider does. Right: what supports it
+   (history, where it goes, how it works). Centre: a single focus, or the step
+   that finishes the job. Phones keep one full-width column. */
+.split, .split-even { display: grid; gap: 1rem; align-items: start; }
+.split > *, .split-even > * { min-width: 0; }
+@media (min-width: 900px) {
+  .split { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 1.5rem; }
+  .split-even { grid-template-columns: 1fr 1fr; }
+  .center { max-width: 40rem; margin-inline: auto; }
 }

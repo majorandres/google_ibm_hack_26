@@ -132,7 +132,8 @@ export default function Complaints({ providers }: { providers: Provider[] }) {
   }
 
   return (
-    <div className="zig space-y-4">
+    <div className={complaint ? 'split' : 'center'}>
+      <div className="space-y-4">
       <Card icon={ListChecks} title="Pick the rides to include" role="group">
         <p className="hint mb-3 mt-0">One ride service per complaint.</p>
         {trips === null && !status.error && <p>Loading your rides…</p>}
@@ -184,30 +185,6 @@ export default function Complaints({ providers }: { providers: Provider[] }) {
       <Status error={status.error}>{status.text}</Status>
 
       {complaint && (
-        // Arrives with a short fade and rise so it does not pop in after the wait. Reduced motion stills it (index.css).
-        <section
-          aria-labelledby="draft-heading"
-          className="record transition-[opacity,translate] duration-(--dur-2) ease-swift starting:translate-y-2 starting:opacity-0"
-        >
-          <header className="record-head flex-wrap">
-            <h2 id="draft-heading">Send it to: {complaint.channel.name}</h2>
-            <span className="record-id">DRAFT · NOT SENT</span>
-          </header>
-          <div className="record-body space-y-4">
-            <div>
-              <FilingWindow daysLeft={complaint.days_left} deadlineDays={complaint.channel.deadline_days} />
-              {complaint.days_left !== null && (
-                <p className="hint">
-                  Counted from the oldest ride you picked. {complaint.channel.deadline_note}
-                </p>
-              )}
-            </div>
-            <ChannelDetails channel={complaint.channel} />
-          </div>
-        </section>
-      )}
-
-      {complaint && (
         <Card icon={Mail} title="Your letter" className="space-y-4">
             <p className="font-semibold text-rust">{complaint.disclaimer}</p>
             <div>
@@ -240,6 +217,33 @@ export default function Complaints({ providers }: { providers: Provider[] }) {
         </Card>
       )}
 
+      </div>
+
+      <div className="space-y-4">
+      {complaint && (
+        // Arrives with a short fade and rise so it does not pop in after the wait. Reduced motion stills it (index.css).
+        <section
+          aria-labelledby="draft-heading"
+          className="record transition-[opacity,translate] duration-(--dur-2) ease-swift starting:translate-y-2 starting:opacity-0"
+        >
+          <header className="record-head flex-wrap">
+            <h2 id="draft-heading">Send it to: {complaint.channel.name}</h2>
+            <span className="record-id">DRAFT · NOT SENT</span>
+          </header>
+          <div className="record-body space-y-4">
+            <div>
+              <FilingWindow daysLeft={complaint.days_left} deadlineDays={complaint.channel.deadline_days} />
+              {complaint.days_left !== null && (
+                <p className="hint">
+                  Counted from the oldest ride you picked. {complaint.channel.deadline_note}
+                </p>
+              )}
+            </div>
+            <ChannelDetails channel={complaint.channel} />
+          </div>
+        </section>
+      )}
+
             {complaint?.escalation && (
               <More summary="If you get no answer">
               <p>
@@ -256,6 +260,7 @@ export default function Complaints({ providers }: { providers: Provider[] }) {
               </p>
               </More>
             )}
+      </div>
     </div>
   )
 }

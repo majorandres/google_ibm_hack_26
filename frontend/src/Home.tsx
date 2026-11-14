@@ -36,11 +36,12 @@ export default function Home({
   const providerName = (id: string) => providers.find((p) => p.id === id)?.name ?? id
 
   return (
-    <div className="zig space-y-6">
+    <div className="space-y-6">
       <p className="text-xl leading-snug text-ink/80">
         How was today&rsquo;s ride? Log it while it&rsquo;s fresh — ten seconds is enough.
       </p>
 
+      <div className="split">
       <div className="grid gap-3 sm:grid-cols-2">
         {FEATURES.map((f, i) => (
           <button
@@ -59,7 +60,7 @@ export default function Home({
         ))}
       </div>
 
-      <section aria-labelledby="recent-heading" className="border-t border-app-line pt-7">
+      <section aria-labelledby="recent-heading">
         <h2 id="recent-heading" className="text-xl font-semibold">
           Your recent rides
         </h2>
@@ -96,6 +97,7 @@ export default function Home({
           ))}
         </ul>
       </section>
+      </div>
     </div>
   )
 }

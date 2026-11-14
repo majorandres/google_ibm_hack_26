@@ -30,11 +30,12 @@ export default function Dashboard() {
   const max = Math.max(...stats.by_provider_month.map((r) => r.rate), 0.01)
   const flagged = stats.by_provider_month.filter((r) => r.flagged)
   return (
-    <div className="zig space-y-4">
+    <div className="space-y-4">
       <p className="rounded-lg border border-pending bg-brand-highlight/20 p-3 font-semibold">
         Demo data, not real riders. These providers are made up.
       </p>
 
+      <div className="split">
       <Card icon={TriangleAlert} title="Possible patterns" className="fx-rise">
         {flagged.length === 0 ? (
           <p>None this period.</p>
@@ -56,8 +57,9 @@ export default function Dashboard() {
         <p className="hint">A flag is not a finding of a violation.</p>
       </Card>
 
+      <div className="space-y-4">
       <Card icon={ArrowLeftRight} title="Going there vs. coming back" className="fx-rise">
-        <ul className="grid gap-3 sm:grid-cols-2">
+        <ul className="grid gap-3">
           {stats.by_direction.map((r) => (
             <li key={r.direction} className="rounded-lg border border-app-line p-4">
               <p className="font-semibold">{r.direction === 'return' ? 'Coming back' : 'Going there'}</p>
@@ -78,6 +80,9 @@ export default function Dashboard() {
           threshold is our assumption for the demo.
         </p>
       </More>
+
+      </div>
+      </div>
 
       <More summary="Every provider and month">
         <div className="overflow-x-auto focus-visible:outline-4 focus-visible:outline-brand" tabIndex={0} role="region" aria-label="Every provider and month">
