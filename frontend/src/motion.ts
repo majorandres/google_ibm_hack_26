@@ -14,3 +14,5 @@ export function withTransition(update: () => void): Promise<void> {
   transition.ready.catch(() => {}) // interrupted or hidden tab: the update still ran, only the animation was skipped
   return transition.updateCallbackDone
 }
+
+export const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches

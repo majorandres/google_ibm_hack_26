@@ -6,7 +6,7 @@ import Dashboard from './Dashboard'
 import Home from './Home'
 import { withTransition } from './motion'
 import TripForm from './TripForm'
-import { Logo, Status } from './ui'
+import { DotField, Logo, Status } from './ui'
 import VoiceLog from './VoiceLog'
 
 const SCREENS = [
@@ -57,7 +57,8 @@ export default function App() {
         Skip to content
       </a>
 
-      <header className="border-b border-app-line bg-app-surface">
+      <DotField />
+      <header className="relative z-1 border-b border-app-line bg-app-surface">
         <div className="mx-auto flex min-h-20 max-w-6xl items-center justify-between gap-4 px-5 md:px-8">
           <a href="#" className="flex items-center gap-2.5 font-display text-xl font-bold text-app-ink">
             <Logo />
@@ -68,11 +69,11 @@ export default function App() {
         </div>
       </header>
 
-      <div className="mx-auto w-full max-w-3xl px-5 pb-28 pt-8 md:px-8 md:pt-12">
+      <div className="relative z-1 mx-auto w-full max-w-3xl px-5 pb-28 pt-8 md:px-8 md:pt-12">
         <main id="main">
           <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase text-app-muted"><span className="h-1 w-6 bg-brand-highlight" aria-hidden="true" />Michigan paratransit &amp; Medicaid rides</p>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <h1 ref={heading} tabIndex={-1} className="focus:outline-none">
+          <h1 key={screen} ref={heading} tabIndex={-1} className="focus:outline-none">
             {title}
           </h1>
           <span className="text-sm text-app-muted">Demo account · Denise</span>

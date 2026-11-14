@@ -580,3 +580,69 @@
   }
   .more[open]::details-content { height: auto; }
 }
+
+/* ============================================================
+   App effects. Still versions first; motion only where welcome.
+   ============================================================ */
+.dots { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+@media (forced-colors: active) { .dots { display: none; } }
+
+/* the screen title sits in a black label, like the landing headline */
+.rr-app h1 {
+  display: inline-block;
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+  padding: 0.08em 0.3em 0.14em;
+  border-radius: 0.3rem;
+}
+
+/* feature tile: fills with black from the left on hover or focus */
+.feature {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: 0.875rem;
+  min-height: 5rem;
+  padding: 1rem 1.25rem;
+  text-align: left;
+  color: var(--color-ink);
+  border: 1px solid var(--color-ink);
+  border-radius: 0.3rem;
+  background: linear-gradient(var(--color-ink), var(--color-ink)) no-repeat left / 0% 100% var(--color-paper);
+  cursor: pointer;
+}
+.feature svg { width: 1.25rem; height: 1.25rem; grid-row: 1 / span 2; }
+.feature-title { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+.feature-blurb { grid-column: 2; font-size: 0.875rem; color: var(--color-app-muted); }
+.feature-arrow { grid-column: 3; }
+.feature:hover, .feature:focus-visible, .feature[data-primary] { background-size: 100% 100%; color: var(--color-paper); }
+.feature:hover .feature-blurb, .feature:focus-visible .feature-blurb, .feature[data-primary] .feature-blurb { color: #d4d4d4; }
+.feature:hover .feature-arrow, .feature:focus-visible .feature-arrow { translate: 0.375rem 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes label-in { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+  @keyframes pop { from { scale: 0.6; } }
+
+  .rr-app h1 { animation: label-in var(--dur-3) var(--ease-swift) both; }
+  .feature { transition: background-size var(--dur-2) var(--ease-swift), color var(--dur-2) ease; }
+  .feature-arrow { transition: translate var(--dur-2) var(--ease-swift); }
+  .rr-tab[aria-current='page'] svg { animation: pop var(--dur-2) var(--ease-swift); }
+
+  /* a chosen answer fills in from the left */
+  .choice {
+    background-image: linear-gradient(var(--color-tint), var(--color-tint));
+    background-repeat: no-repeat;
+    background-size: 0% 100%;
+    transition: background-size var(--dur-2) var(--ease-swift), border-color 140ms ease;
+  }
+  .choice:has(:checked) { background-color: var(--color-paper); background-size: 100% 100%; }
+
+  /* modules rise as they scroll into view; anything already on screen is simply shown */
+  @supports (animation-timeline: view()) {
+    .rr-app .card, .rr-app .more, .rr-app li.record {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+  }
+}

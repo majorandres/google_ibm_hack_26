@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Logo } from './ui'
+import { reducedMotion } from './motion'
+import { DotField, Logo } from './ui'
 
 /**
  * Landing page: one scroll-driven story. Light, royal blue + yellow brand.
@@ -85,8 +86,6 @@ const BEATS = [
   { until: 0.85, caption: 'The van drives right past.' },
   { until: Infinity, caption: 'Another missed appointment. No one owns it.' },
 ] as const
-
-const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /**
  * The scroll-driven story, from the pitch's hook: a rider in a powered wheelchair
@@ -295,50 +294,6 @@ function RideScene() {
   )
 }
 
-/**
- * Decorative halftone field behind the whole page: square dots swell and fade in slow
- * waves, pushed along by scroll. Reduced motion draws it once and leaves it still.
- */
-function DotField() {
-  const ref = useRef<HTMLCanvasElement>(null)
-
-  useEffect(() => {
-    const canvas = ref.current
-    const ctx = canvas?.getContext('2d')
-    if (!canvas || !ctx) return
-    const GAP = 14
-    let raf = 0
-    const draw = (ms: number) => {
-      const dpr = window.devicePixelRatio
-      const t = ms / 4000
-      const s = window.scrollY / 600
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      ctx.fillStyle = '#d4d4d4' // light enough that muted text over a dot still passes 4.5:1
-      for (let y = GAP / 2; y < window.innerHeight; y += GAP) {
-        for (let x = GAP / 2; x < window.innerWidth; x += GAP) {
-          const v = Math.sin(x * 0.006 + t + s) + Math.cos(y * 0.008 - t * 0.7 + s * 2) - 0.6
-          if (v > 0) ctx.fillRect(x * dpr, y * dpr, v * 3.5 * dpr, v * 3.5 * dpr)
-        }
-      }
-      if (!reducedMotion()) raf = requestAnimationFrame(draw)
-    }
-    const resize = () => {
-      canvas.width = window.innerWidth * window.devicePixelRatio
-      canvas.height = window.innerHeight * window.devicePixelRatio
-      if (reducedMotion()) draw(0)
-    }
-    resize()
-    if (!reducedMotion()) raf = requestAnimationFrame(draw)
-    window.addEventListener('resize', resize)
-    return () => {
-      window.removeEventListener('resize', resize)
-      cancelAnimationFrame(raf)
-    }
-  }, [])
-
-  return <canvas ref={ref} className="lp-dots" aria-hidden="true" />
-}
-
 /** Phone frame with a miniature of the app home screen, revealed on scroll. */
 function AppReveal() {
   return (
@@ -531,7 +486,6 @@ export default function Landing() {
 
         /* ---- Monochrome look: black on white, one typeface, big tight type ---- */
         html { scroll-padding-bottom: 6rem; } /* keep focused things clear of the floating bar */
-        .lp-dots { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
         .lp > main, .lp > footer { position: relative; z-index: 1; }
 
         /* floating bar, bottom centre */

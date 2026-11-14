@@ -1,5 +1,6 @@
-import { useId, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { Check, ClipboardCheck, type LucideIcon } from 'lucide-react'
+import { reducedMotion } from './motion'
 
 // Shared styles. Controls are 52-56px tall with a visible focus ring.
 // Classes come from the design system in index.css.
@@ -36,6 +37,50 @@ export function Logo() {
       <ClipboardCheck className="size-5" aria-hidden="true" />
     </span>
   )
+}
+
+/**
+ * Decorative halftone field behind a whole page: square dots swell and fade in slow
+ * waves, pushed along by scroll. Reduced motion draws it once and leaves it still.
+ */
+export function DotField() {
+  const ref = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = ref.current
+    const ctx = canvas?.getContext('2d')
+    if (!canvas || !ctx) return
+    const GAP = 14
+    let raf = 0
+    const draw = (ms: number) => {
+      const dpr = window.devicePixelRatio
+      const t = ms / 4000
+      const s = window.scrollY / 600
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.fillStyle = '#d4d4d4' // light enough that muted text over a dot still passes 4.5:1
+      for (let y = GAP / 2; y < window.innerHeight; y += GAP) {
+        for (let x = GAP / 2; x < window.innerWidth; x += GAP) {
+          const v = Math.sin(x * 0.006 + t + s) + Math.cos(y * 0.008 - t * 0.7 + s * 2) - 0.6
+          if (v > 0) ctx.fillRect(x * dpr, y * dpr, v * 3.5 * dpr, v * 3.5 * dpr)
+        }
+      }
+      if (!reducedMotion()) raf = requestAnimationFrame(draw)
+    }
+    const resize = () => {
+      canvas.width = window.innerWidth * window.devicePixelRatio
+      canvas.height = window.innerHeight * window.devicePixelRatio
+      if (reducedMotion()) draw(0)
+    }
+    resize()
+    if (!reducedMotion()) raf = requestAnimationFrame(draw)
+    window.addEventListener('resize', resize)
+    return () => {
+      window.removeEventListener('resize', resize)
+      cancelAnimationFrame(raf)
+    }
+  }, [])
+
+  return <canvas ref={ref} className="dots" aria-hidden="true" />
 }
 
 /** One module of a screen: an icon, a short title and one job. `done` swaps the icon for a tick. */

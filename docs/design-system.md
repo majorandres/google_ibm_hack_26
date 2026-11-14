@@ -96,6 +96,12 @@ Body floor is 17px. Headings use `clamp()` with negative tracking.
 - `.more` (`More` in `ui.tsx`) — a native `<details>` for explanation the rider
   can open when they want it. Never put a disclaimer, a deadline or the "demo
   data" notice inside one; those stay visible.
+- `.feature` — the four tiles on Home, one per part of the app. A tile fills
+  with black from the left on hover or keyboard focus and its arrow nudges
+  right. The first tile is filled from the start because logging is the main job.
+- `DotField` (`ui.tsx`, `.dots`) — the halftone field behind the landing page
+  and the app. Decorative, `aria-hidden`, still under reduced motion, hidden in
+  forced colours.
 - `.tabbar` / `.tab` — thumb-reachable bottom nav, labels always visible.
 - `.built-with` — the quiet IBM credit line.
 
