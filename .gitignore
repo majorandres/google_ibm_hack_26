@@ -26,3 +26,6 @@ trips.csv
 crash.log
 
 .DS_Store
+
+# Playwright MCP snapshots and screenshots
+.playwright-mcp/
