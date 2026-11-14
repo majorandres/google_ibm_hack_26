@@ -56,22 +56,25 @@ export function DotField() {
     // Pointer target, and the point that eases toward it so the swell trails like liquid.
     const target = { x: -9999, y: -9999 }
     const at = { ...target }
+    let goal = 0 // 1 while a pointer is over the page, 0 once it has left
+    let power = 0 // eases toward goal, so the swell grows in and dissipates
     const draw = () => {
       raf = 0
       const dpr = window.devicePixelRatio
       at.x += (target.x - at.x) * 0.08
       at.y += (target.y - at.y) * 0.08
+      power += (goal - power) * 0.06
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       ctx.fillStyle = '#d4d4d4' // light enough that muted text over a dot still passes 4.5:1
       for (let y = GAP / 2; y < window.innerHeight; y += GAP) {
         for (let x = GAP / 2; x < window.innerWidth; x += GAP) {
-          const pull = 1.6 * Math.exp(-((x - at.x) ** 2 + (y - at.y) ** 2) / REACH)
+          const pull = 1.6 * power * Math.exp(-((x - at.x) ** 2 + (y - at.y) ** 2) / REACH)
           const v = Math.min(Math.sin(x * 0.006) + Math.cos(y * 0.008) - 0.6 + pull, 1.6)
           if (v > 0) ctx.fillRect((x - v * 1.75) * dpr, (y - v * 1.75) * dpr, v * 3.5 * dpr, v * 3.5 * dpr)
         }
       }
-      // Keep drawing only while the swell is still catching up with the pointer.
-      if (Math.abs(target.x - at.x) + Math.abs(target.y - at.y) > 0.5) raf = requestAnimationFrame(draw)
+      // Keep drawing only while the swell is still catching up with the pointer or fading.
+      if (Math.abs(target.x - at.x) + Math.abs(target.y - at.y) > 0.5 || Math.abs(goal - power) > 0.01) raf = requestAnimationFrame(draw)
     }
     const resize = () => {
       canvas.width = window.innerWidth * window.devicePixelRatio
@@ -81,14 +84,24 @@ export function DotField() {
     const move = (e: PointerEvent) => {
       target.x = e.clientX
       target.y = e.clientY
+      goal = 1
+      if (!raf) raf = requestAnimationFrame(draw)
+    }
+    // Fires when the mouse leaves the window and when a finger lifts.
+    const leave = () => {
+      goal = 0
       if (!raf) raf = requestAnimationFrame(draw)
     }
     resize()
     window.addEventListener('resize', resize)
-    if (!reducedMotion()) window.addEventListener('pointermove', move, { passive: true })
+    if (!reducedMotion()) {
+      window.addEventListener('pointermove', move, { passive: true })
+      document.documentElement.addEventListener('pointerleave', leave)
+    }
     return () => {
       window.removeEventListener('resize', resize)
       window.removeEventListener('pointermove', move)
+      document.documentElement.removeEventListener('pointerleave', leave)
       cancelAnimationFrame(raf)
     }
   }, [])

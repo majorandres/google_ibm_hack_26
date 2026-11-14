@@ -86,7 +86,7 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
 
   const incident = result?.incident
   return (
-    <div className="space-y-4">
+    <div className="zig space-y-4">
       <Card icon={Mic} title="Say what happened">
       <p className="hint mb-4 mt-0">For example: “My return ride never came and I waited two hours.”</p>
 

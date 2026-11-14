@@ -132,7 +132,7 @@ export default function Complaints({ providers }: { providers: Provider[] }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="zig space-y-4">
       <Card icon={ListChecks} title="Pick the rides to include" role="group">
         <p className="hint mb-3 mt-0">One ride service per complaint.</p>
         {trips === null && !status.error && <p>Loading your rides…</p>}

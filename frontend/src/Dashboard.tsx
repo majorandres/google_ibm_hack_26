@@ -30,7 +30,7 @@ export default function Dashboard() {
   const max = Math.max(...stats.by_provider_month.map((r) => r.rate), 0.01)
   const flagged = stats.by_provider_month.filter((r) => r.flagged)
   return (
-    <div className="space-y-4">
+    <div className="zig space-y-4">
       <p className="rounded-lg border border-pending bg-brand-highlight/20 p-3 font-semibold">
         Demo data, not real riders. These providers are made up.
       </p>

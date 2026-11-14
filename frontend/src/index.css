@@ -656,3 +656,11 @@
     }
   }
 }
+
+/* On wide screens a screen's modules alternate left and right instead of stacking
+   in one centred column. Phones keep the single full-width column. */
+@media (min-width: 768px) {
+  .zig > * { width: 74%; }
+  .zig > :nth-child(even) { margin-left: auto; }
+  .zig .zig > * { width: auto; margin-left: 0; } /* a form nested in a module does not zigzag again */
+}

@@ -509,6 +509,17 @@ export default function Landing() {
         .lp-hero-sub { color: var(--ink); font-weight: 600; font-size: clamp(1.25rem, 2.4vw, 1.75rem); line-height: 1.15; letter-spacing: -0.02em; }
         .lp-cta, .lp-step, .lp-stat { border-radius: 0.3rem; }
 
+        /* wide screens: the two headline blocks sit left and right, not stacked in the middle */
+        @media (min-width: 768px) {
+          .lp-hero { align-items: stretch; text-align: left; }
+          .lp-hero h1 { display: flex; flex-direction: column; }
+          .lp-hero h1 br { display: none; }
+          .lp-hero h1 > .lp-label { align-self: flex-start; }
+          .lp-hero h1 > .lp-label ~ .lp-label { align-self: flex-end; }
+          .lp-hero-sub { margin-left: 0; }
+          .lp-cta { align-self: flex-start; }
+        }
+
         /* sections: very large headings, rows split by black rules */
         .lp-section h2, .lp-reveal h2, .lp-band h2 { font-size: clamp(2.5rem, 7vw, 4.5rem); font-weight: 600; letter-spacing: -0.04em; line-height: 0.98; }
         .lp-section-lead, .lp-reveal p { color: var(--ink); font-weight: 600; font-size: clamp(1.25rem, 2.4vw, 1.75rem); line-height: 1.15; letter-spacing: -0.02em; }

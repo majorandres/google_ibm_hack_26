@@ -66,7 +66,7 @@ export default function TripForm(props: {
   }
 
   return (
-    <form onSubmit={save} className="space-y-4">
+    <form onSubmit={save} className="zig space-y-4">
       <Card icon={Bus} title="Which ride service?" role="radiogroup" done={!!draft.provider_id}>
         <div className="grid gap-2 sm:grid-cols-2">
           {props.providers.map((p) => (

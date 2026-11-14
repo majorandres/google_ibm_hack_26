@@ -36,7 +36,7 @@ export default function Home({
   const providerName = (id: string) => providers.find((p) => p.id === id)?.name ?? id
 
   return (
-    <div className="space-y-6">
+    <div className="zig space-y-6">
       <p className="text-xl leading-snug text-ink/80">
         How was today&rsquo;s ride? Log it while it&rsquo;s fresh — ten seconds is enough.
       </p>
