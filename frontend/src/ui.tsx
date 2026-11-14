@@ -137,9 +137,10 @@ export function Card(props: {
 }
 
 /** Extra detail the rider opens when they want it. Native <details>, so keyboards and screen readers work as-is. */
-export function More({ summary, children }: { summary: string; children: ReactNode }) {
+export function More(props: { summary: string; open?: boolean; className?: string; children: ReactNode }) {
+  const { summary, children } = props
   return (
-    <details className="more">
+    <details className={`more ${props.className ?? ''}`} open={props.open}>
       <summary>{summary}</summary>
       <div>{children}</div>
     </details>

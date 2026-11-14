@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, outcomeLabel, type Provider, type Trip } from './api'
-import { Status, StatusChip } from './ui'
+import { More, Status, StatusChip } from './ui'
 import { ArrowRight, ChartNoAxesCombined, FileText, Mic, Plus } from 'lucide-react'
 
 const FEATURES = [
@@ -41,7 +41,6 @@ export default function Home({
         How was today&rsquo;s ride? Log it while it&rsquo;s fresh — ten seconds is enough.
       </p>
 
-      <div className="split">
       <div className="grid gap-3 sm:grid-cols-2">
         {FEATURES.map((f, i) => (
           <button
@@ -60,16 +59,13 @@ export default function Home({
         ))}
       </div>
 
-      <section aria-labelledby="recent-heading">
-        <h2 id="recent-heading" className="text-xl font-semibold">
-          Your recent rides
-        </h2>
+      <More summary="Your recent rides" open className="center">
         {error && <Status error>Could not load your rides. {error}</Status>}
         {trips === null && !error && <p className="mt-3">Loading your rides…</p>}
         {trips?.length === 0 && (
           <p className="mt-3">No rides logged yet. Your last few rides will show up here.</p>
         )}
-        <ul className="mt-3 grid gap-3">
+        <ul className="grid gap-3">
           {trips?.map((t, i) => (
             <li key={t.id} className="record fx-rise" style={{ ['--i' as string]: i }}>
               <div className="record-head items-center justify-between">
@@ -96,8 +92,7 @@ export default function Home({
             </li>
           ))}
         </ul>
-      </section>
-      </div>
+      </More>
     </div>
   )
 }
