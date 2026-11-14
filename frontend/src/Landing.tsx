@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { ClipboardCheck } from 'lucide-react'
 import Story from './Story'
 
 /**
@@ -68,16 +69,33 @@ const STEPS = [
   },
 ] as const
 
+// Each figure says only what its source says; the sources are listed under the tiles.
 const STATS = [
-  { caption: 'Michigan riders depend on paratransit for work, dialysis, and groceries.' },
-  { caption: 'of trips arrive late or not at all in some service regions.' },
-  { caption: 'days is a typical filing window — miss it and the complaint dies.' },
+  { num: '30,912', caption: 'paratransit trips in Detroit in a single month (August 2025).' },
+  {
+    num: '35%',
+    caption: 'of Medicaid ride pickups in Metro Detroit fell outside the allowed time window in one state review. The contract allowed 15%.',
+  },
+  { num: '180', caption: 'days to file an ADA complaint with DDOT. After that, it won’t be investigated.' },
 ] as const
 
-/** Phone frame with a miniature of the app home screen, revealed on scroll. */
+/** WebGL 2 is what three.js needs; checked before its chunk is downloaded. */
+function hasWebGL() {
+  const gl = document.createElement('canvas').getContext('webgl2')
+  gl?.getExtension('WEBGL_lose_context')?.loseContext()
+  return gl !== null
+}
+
+/**
+ * Phone frame with a miniature of the app home screen, revealed on scroll.
+ * With WebGL a 3D phone (three/phone.ts) is drawn over it and turns as you scroll past;
+ * the HTML phone then stays in place, unseen, as the layout slot and the accessible description.
+ */
 function AppReveal() {
   const ref = useRef<HTMLDivElement>(null)
+  const phoneRef = useRef<HTMLDivElement>(null)
   const [shown, setShown] = useState(false)
+  const [three, setThree] = useState(false)
 
   useEffect(() => {
     const el = ref.current
@@ -94,9 +112,32 @@ function AppReveal() {
     return () => observer.disconnect()
   }, [])
 
+  // Loaded after first paint. Without WebGL, or if three.js fails or the GPU drops it, the HTML phone shows.
+  useEffect(() => {
+    const wrap = ref.current
+    const phone = phoneRef.current
+    if (!wrap || !phone || !hasWebGL()) return
+    let cancelled = false
+    let stop: (() => void) | undefined
+    import('./three/phone')
+      .then(({ startPhone }) => {
+        if (cancelled) return
+        stop = startPhone(wrap, phone, () => {
+          stop = undefined
+          setThree(false)
+        })
+        setThree(true)
+      })
+      .catch(() => setThree(false))
+    return () => {
+      cancelled = true
+      stop?.()
+    }
+  }, [])
+
   return (
-    <div ref={ref} className={`lp-phone-wrap ${shown ? 'lp-shown' : ''}`}>
-      <div className="lp-phone" role="img" aria-label="Preview of the RideRecord home screen: a greeting, a Log a ride button, a Talk instead button, and recent complaints with status chips.">
+    <div ref={ref} className={`lp-phone-wrap ${shown ? 'lp-shown' : ''} ${three ? 'lp-phone-3d' : ''}`}>
+      <div ref={phoneRef} className="lp-phone" role="img" aria-label="Preview of the RideRecord home screen: a greeting, a Log a ride button, a Talk instead button, and recent complaints with status chips.">
         <p className="lp-phone-hi">Hi, Denise</p>
         <p className="lp-phone-sub">How was today&rsquo;s ride?</p>
         <span className="lp-phone-btn">Log a ride</span>
@@ -183,7 +224,10 @@ export default function Landing() {
         @media (max-width: 860px) { .lp-reveal-grid { grid-template-columns: 1fr; } }
         .lp-reveal h2 { font-size: clamp(1.875rem, 4vw, 2.75rem); letter-spacing: -0.02em; line-height: 1.1; margin: 0 0 1rem; }
         .lp-reveal p { color: var(--muted); font-size: 1.125rem; margin: 0; }
-        .lp-phone-wrap { display: flex; justify-content: center; }
+        .lp-phone-wrap { position: relative; display: flex; justify-content: center; }
+        /* The 3D phone's canvas: the wrap's width, with room above and below for the turn and its shadow. */
+        .lp-phone-canvas { position: absolute; left: 0; top: -12%; width: 100%; height: 124%; pointer-events: none; }
+        .lp-phone-3d .lp-phone { opacity: 0; }
         .lp-phone {
           width: min(100%, 20rem); background: var(--paper); border: 3px solid var(--ink);
           border-radius: 2rem; padding: 2rem 1.5rem; box-shadow: 0 24px 48px -20px color-mix(in oklab, var(--ink) 25%, transparent);
@@ -227,7 +271,8 @@ export default function Landing() {
           color: var(--blue); line-height: 1; letter-spacing: -0.02em;
         }
         .lp-stat p { color: var(--muted); margin: 1rem 0 0; }
-        .lp-stats-note { margin-top: 1.5rem; font-size: 0.875rem; color: var(--muted); }
+        .lp-stats-note { margin-top: 1.5rem; font-size: 0.875rem; color: var(--muted); max-width: 48rem; }
+        .lp-stats-note a { color: var(--blue); text-decoration: underline; text-underline-offset: 2px; }
 
         /* FAQ */
         .lp-faq { max-width: 48rem; }
@@ -265,21 +310,18 @@ export default function Landing() {
         @media (prefers-reduced-motion: no-preference) {
           .lp-phone-wrap { opacity: 0; transform: translateY(3rem); transition: opacity 600ms ease, transform 600ms ease; }
           .lp-phone-wrap.lp-shown { opacity: 1; transform: none; }
+          /* The 3D phone's own turn is its entrance, so it skips the fade and rise. */
+          .lp-phone-wrap.lp-phone-3d { opacity: 1; transform: none; transition: none; }
           .lp-cta, .lp-header-cta, .lp-band-cta { transition: background 150ms ease, filter 150ms ease; }
         }
       `}</style>
 
       <header className="lp-header">
         <a href="#top" className="lp-logo">
-          {/* Minimal wolverine-riding-a-bus mark */}
-          <svg width="34" height="34" viewBox="0 0 48 48" aria-hidden="true">
-            <rect x="4" y="16" width="40" height="20" rx="5" fill="currentColor" />
-            <rect x="9" y="21" width="9" height="7" rx="1.5" fill="var(--paper)" />
-            <rect x="21" y="21" width="9" height="7" rx="1.5" fill="var(--paper)" />
-            <circle cx="14" cy="38" r="4" fill="currentColor" />
-            <circle cx="34" cy="38" r="4" fill="currentColor" />
-            <path d="M20 14c2-5 6-7 9-6-1 2-1 4 1 5-2 1-4 1-6 0-1 1-3 2-4 1z" fill="currentColor" />
-          </svg>
+          {/* The same clipboard mark as the app's header (App.tsx). */}
+          <span className="flex size-9 items-center justify-center rounded-lg bg-brand text-app-surface">
+            <ClipboardCheck className="size-5" aria-hidden="true" />
+          </span>
           RideRecord
         </a>
         <a href="#app" className="lp-header-cta">
@@ -345,13 +387,17 @@ export default function Landing() {
           <ul className="lp-stats">
             {STATS.map((s) => (
               <li key={s.caption} className="lp-stat">
-                <span className="lp-stat-num">—</span>
+                <span className="lp-stat-num">{s.num}</span>
                 <p>{s.caption}</p>
               </li>
             ))}
           </ul>
           <p className="lp-stats-note">
-            Placeholder figures — real sourced numbers are being verified and will replace these.
+            Sources: DDOT figures reported by{' '}
+            <a href="https://www.bridgedetroit.com/confidence-ride-requests-up-for-detroit-paratransit/">BridgeDetroit, August 2025</a>;{' '}
+            <a href="https://audgen.michigan.gov/wp-content/uploads/2022/03/r391071520-2859.pdf">Michigan Auditor General, Medicaid transportation audit, March 2022</a>{' '}
+            (state compliance reviews of Macomb, Oakland and Wayne counties, 2018–2019; a follow-up audit is due in late 2026);{' '}
+            <a href="https://detroitmi.gov/taxonomy/term/6646">DDOT ADA complaint procedure</a>.
           </p>
         </section>
 
