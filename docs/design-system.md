@@ -72,6 +72,12 @@ Body floor is 17px. Headings use `clamp()` with negative tracking.
   hexagon.
 - `.deadline` — time until the agency's response deadline as a rule, not a
   number. Set `--pct` inline; put the accessible name on the parent.
+- `.card` (`Card` in `ui.tsx`) — one module of a screen: an icon, a short title
+  and one job. A screen is a few cards, not a run of text. `done` swaps the icon
+  for a tick once a question is answered.
+- `.more` (`More` in `ui.tsx`) — a native `<details>` for explanation the rider
+  can open when they want it. Never put a disclaimer, a deadline or the "demo
+  data" notice inside one; those stay visible.
 - `.tabbar` / `.tab` — thumb-reachable bottom nav, labels always visible.
 - `.built-with` — the quiet IBM credit line.
 

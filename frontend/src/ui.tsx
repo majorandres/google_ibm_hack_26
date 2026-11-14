@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
+import { Check, type LucideIcon } from 'lucide-react'
 
 // Shared styles. Controls are 52-56px tall with a visible focus ring.
 // Classes come from the design system in index.css.
@@ -25,6 +26,43 @@ export function Choice(props: {
       />
       <span>{props.children}</span>
     </label>
+  )
+}
+
+/** One module of a screen: an icon, a short title and one job. `done` swaps the icon for a tick. */
+export function Card(props: {
+  icon: LucideIcon
+  title: string
+  done?: boolean
+  role?: 'group' | 'radiogroup'
+  className?: string
+  children: ReactNode
+}) {
+  const id = useId()
+  const Mark = props.done ? Check : props.icon
+  return (
+    <section role={props.role} aria-labelledby={id} className={`card ${props.className ?? ''}`}>
+      <div className="card-head">
+        <span className="card-icon" data-done={props.done || undefined} aria-hidden="true">
+          <Mark />
+        </span>
+        <h2 id={id}>
+          {props.title}
+          {props.done && <span className="sr-only"> (answered)</span>}
+        </h2>
+      </div>
+      {props.children}
+    </section>
+  )
+}
+
+/** Extra detail the rider opens when they want it. Native <details>, so keyboards and screen readers work as-is. */
+export function More({ summary, children }: { summary: string; children: ReactNode }) {
+  return (
+    <details className="more">
+      <summary>{summary}</summary>
+      <div>{children}</div>
+    </details>
   )
 }
 

@@ -523,3 +523,80 @@
   .rr-navigation { width: 100%; gap: 0; }
   .rr-navigation .rr-tab { flex: 1; min-width: 0; flex-direction: column; gap: 0.25rem; font-size: 0.6875rem; padding: 0.625rem 0.125rem; border-radius: 0; min-height: 64px; }
 }
+
+/* ============================================================
+   Modules: each screen is a few cards, one job per card.
+   Longer explanations sit in .more, closed until asked for.
+   ============================================================ */
+.card {
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.875rem;
+}
+.card-icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.625rem;
+  background-color: var(--color-tint);
+  color: var(--color-lake);
+}
+.card-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.card-icon[data-done] {
+  background-color: var(--color-filed);
+  color: #fff;
+}
+.more {
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: 0.75rem;
+}
+.more > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3.5rem;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.more > summary::-webkit-details-marker {
+  display: none;
+}
+.more > summary::after {
+  content: '+';
+  flex: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--color-lake);
+}
+.more[open] > summary::after {
+  content: '−';
+}
+.more > div {
+  padding: 0 1.25rem 1.25rem;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .more { interpolate-size: allow-keywords; }
+  .more::details-content {
+    height: 0;
+    overflow: clip;
+    transition: height var(--dur-2) var(--ease-swift), content-visibility var(--dur-2) allow-discrete;
+  }
+  .more[open]::details-content { height: auto; }
+}

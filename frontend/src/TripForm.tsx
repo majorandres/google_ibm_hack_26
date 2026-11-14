@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { api, MAX_TEXT, OUTCOMES, RIDER_ID, type Direction, type Provider } from './api'
-import { button, Choice, input, Status } from './ui'
+import { Bus, CalendarDays, MessageCircleQuestion, Route } from 'lucide-react'
+import { button, Card, Choice, input, Status } from './ui'
 
 export type TripDraft = {
   provider_id: string
@@ -65,9 +66,8 @@ export default function TripForm(props: {
   }
 
   return (
-    <form onSubmit={save} className="space-y-6">
-      <fieldset>
-        <legend className="mb-2 text-xl font-semibold">Which ride service?</legend>
+    <form onSubmit={save} className="space-y-4">
+      <Card icon={Bus} title="Which ride service?" role="radiogroup" done={!!draft.provider_id}>
         <div className="grid gap-2 sm:grid-cols-2">
           {props.providers.map((p) => (
             <Choice key={p.id} type="radio" name="provider" checked={draft.provider_id === p.id} onChange={() => set({ provider_id: p.id })}>
@@ -75,10 +75,9 @@ export default function TripForm(props: {
             </Choice>
           ))}
         </div>
-      </fieldset>
+      </Card>
 
-      <fieldset>
-        <legend className="mb-2 text-xl font-semibold">Which trip?</legend>
+      <Card icon={Route} title="Which trip?" role="radiogroup" done={!!draft.direction}>
         <div className="grid grid-cols-2 gap-2">
           <Choice type="radio" name="direction" checked={draft.direction === 'outbound'} onChange={() => set({ direction: 'outbound' })}>
             Going there
@@ -87,21 +86,18 @@ export default function TripForm(props: {
             Coming back
           </Choice>
         </div>
-      </fieldset>
+      </Card>
 
-      <fieldset>
-        <legend className="mb-2 text-xl font-semibold">How did it go?</legend>
-        <div className="grid grid-cols-2 gap-2">
+      <Card icon={MessageCircleQuestion} title="How did it go?">
+        <div role="radiogroup" aria-label="How did it go?" className="grid grid-cols-2 gap-2">
           {OUTCOMES.map((o) => (
             <Choice key={o.value} type="radio" name="outcome" checked={draft.incident_type === o.value} onChange={() => set({ incident_type: o.value })}>
               {o.label}
             </Choice>
           ))}
         </div>
-      </fieldset>
-
       {draft.incident_type === 'late_pickup' && (
-        <div>
+        <div className="mt-4">
           <label htmlFor="trip-minutes-late" className="label">
             How many minutes late? (optional)
           </label>
@@ -117,7 +113,9 @@ export default function TripForm(props: {
           />
         </div>
       )}
+      </Card>
 
+      <Card icon={CalendarDays} title="When, and anything to add" className="space-y-4">
       <div>
         <label htmlFor="trip-date" className="label">
           What day was the ride?
@@ -149,6 +147,7 @@ export default function TripForm(props: {
           Please leave out street addresses and medical details.
         </p>
       </div>
+      </Card>
 
       <button type="submit" disabled={saving} className={`${button} btn-block`}>
         {saving ? 'Saving…' : 'Save this ride'}

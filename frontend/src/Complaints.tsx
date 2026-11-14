@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, outcomeLabel, type Channel, type Complaint, type Provider, type Trip } from './api'
-import { button, buttonSecondary, Deadline, input, Status, StatusChip } from './ui'
+import { ListChecks, Mail } from 'lucide-react'
+import { button, buttonSecondary, Card, Deadline, input, More, Status, StatusChip } from './ui'
 
 const days = (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`
 
@@ -131,9 +132,9 @@ export default function Complaints({ providers }: { providers: Provider[] }) {
   }
 
   return (
-    <div className="space-y-6">
-      <fieldset>
-        <legend className="mb-2 text-xl font-semibold">Pick the rides to include (one ride service per complaint)</legend>
+    <div className="space-y-4">
+      <Card icon={ListChecks} title="Pick the rides to include" role="group">
+        <p className="hint mb-3 mt-0">One ride service per complaint.</p>
         {trips === null && !status.error && <p>Loading your rides…</p>}
         {trips?.length === 0 && <p>No problem rides logged yet. Rides you log as late, missed or denied show up here.</p>}
         <ul className="grid gap-3">
@@ -175,7 +176,7 @@ export default function Complaints({ providers }: { providers: Provider[] }) {
             </li>
           ))}
         </ul>
-      </fieldset>
+      </Card>
 
       <button type="button" onClick={draft} disabled={busy || selected.length === 0} className={`${button} btn-block`}>
         {busy ? 'Writing…' : 'Draft my complaint'}
@@ -202,7 +203,12 @@ export default function Complaints({ providers }: { providers: Provider[] }) {
               )}
             </div>
             <ChannelDetails channel={complaint.channel} />
+          </div>
+        </section>
+      )}
 
+      {complaint && (
+        <Card icon={Mail} title="Your letter" className="space-y-4">
             <p className="font-semibold text-rust">{complaint.disclaimer}</p>
             <div>
               <label htmlFor="draft-letter" className="label">
@@ -231,9 +237,13 @@ export default function Complaints({ providers }: { providers: Provider[] }) {
             </div>
             <p>RideRecord never sends anything for you. You review it and you send it.</p>
 
-            {complaint.escalation && (
+        </Card>
+      )}
+
+            {complaint?.escalation && (
+              <More summary="If you get no answer">
               <p>
-                <span className="font-semibold">If you get no answer:</span> {complaint.escalation.name}
+                {complaint.escalation.name}
                 {complaint.escalation.phone && (
                   <>
                     ,{' '}
@@ -244,10 +254,8 @@ export default function Complaints({ providers }: { providers: Provider[] }) {
                 )}
                 . {complaint.escalation.notes}.
               </p>
+              </More>
             )}
-          </div>
-        </section>
-      )}
     </div>
   )
 }
