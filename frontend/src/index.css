@@ -158,13 +158,37 @@
     font-weight: 600;
     letter-spacing: -0.006em;
     cursor: pointer;
+  }
+  /* Buttons are physical keys: a visible edge under the face that shrinks when pressed. */
+  .btn,
+  .key {
+    --edge: color-mix(in oklab, var(--color-lake) 60%, black);
+    box-shadow: 0 4px 0 var(--edge);
     transition:
       background-color 140ms ease,
       border-color 140ms ease,
-      transform 90ms ease;
+      translate 90ms ease,
+      rotate 140ms ease-out,
+      box-shadow 90ms ease;
   }
-  .btn:active {
-    transform: translateY(1px);
+  .btn-secondary {
+    --edge: var(--color-lake);
+  }
+  .key-light {
+    --edge: color-mix(in oklab, var(--color-lake) 30%, white);
+  }
+  .btn:active:not(:disabled),
+  .key:active,
+  .btn[aria-pressed='true'] {
+    translate: 0 3px; /* `translate`, so it combines with the tilt (rotate) and screen animations (transform) */
+    box-shadow: 0 1px 0 var(--edge);
+  }
+  /* "Tap to talk" stays pressed in, in red, while it records. */
+  .btn[aria-pressed='true'] {
+    --edge: color-mix(in oklab, var(--color-overdue) 60%, black);
+  }
+  .btn:disabled {
+    box-shadow: none; /* flat: nothing to press */
   }
 
   .btn-primary {
@@ -208,6 +232,7 @@
     font-size: 1.0625rem;
     font-family: inherit;
     color: var(--color-ink);
+    box-shadow: inset 0 2px 0 rgb(16 24 40 / 0.06); /* a sunken well */
   }
   .field::placeholder {
     color: #6b6257;
@@ -240,16 +265,31 @@
     border: 2px solid var(--color-line-strong);
     border-radius: var(--radius-field);
     cursor: pointer;
-    transition: border-color 140ms ease, background-color 140ms ease;
+    box-shadow: 0 2px 0 var(--color-line);
+    transition:
+      border-color 140ms ease,
+      background-color 140ms ease,
+      translate 140ms ease,
+      rotate 160ms ease-out,
+      box-shadow 140ms ease;
   }
   .choice:hover {
     border-color: var(--color-deep);
   }
+  /* The picked answer lifts toward you; any tile presses in under a tap. */
   .choice:has(:checked) {
     border-color: var(--color-lake);
     background-color: var(--color-tint);
     font-weight: 600;
-    box-shadow: inset 0 0 0 1px var(--color-lake);
+    translate: 0 -2px;
+    box-shadow:
+      inset 0 0 0 1px var(--color-lake),
+      0 3px 0 var(--color-lake),
+      0 10px 18px -10px color-mix(in oklab, var(--color-lake) 55%, transparent);
+  }
+  .choice:active {
+    translate: 0 1px;
+    box-shadow: 0 1px 0 var(--color-line);
   }
 
   /* --- record: the signature component ----------------------- */
@@ -258,6 +298,12 @@
     border: 1px solid var(--color-line);
     border-left: 3px solid var(--color-deep);
     border-radius: var(--radius-record);
+    /* Two sheets under each record: a small stack of paper. */
+    box-shadow:
+      0 3px 0 -1px var(--color-paper),
+      0 3px 0 0 var(--color-line),
+      0 6px 0 -3px var(--color-paper),
+      0 6px 0 -2px var(--color-line);
   }
   .record-head {
     display: flex;
@@ -285,12 +331,21 @@
     background-color: var(--color-line);
     border-radius: 2px;
     overflow: hidden;
+    box-shadow: inset 0 1px 2px rgb(16 24 40 / 0.25); /* a groove */
   }
   .deadline > span {
     display: block;
     height: 100%;
     width: var(--pct, 0%);
     background-color: var(--color-deep);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35);
+  }
+
+  /* A raised panel: an edge plus a soft shadow, lit like the rest. */
+  .slab {
+    box-shadow:
+      0 4px 0 -1px var(--color-line),
+      0 14px 24px -16px rgb(16 24 40 / 0.3);
   }
   .deadline[data-state='overdue'] > span {
     background-color: var(--color-overdue);
@@ -309,6 +364,7 @@
     letter-spacing: 0.015em;
     text-transform: uppercase;
     white-space: nowrap;
+    box-shadow: 0 2px 0 color-mix(in oklab, currentColor 30%, transparent); /* a small raised tab */
   }
   .chip::before {
     content: '';
@@ -406,8 +462,12 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .btn:active {
-    transform: none;
+  /* Presses keep their edge change but do not move. */
+  .btn:active,
+  .key:active,
+  .btn[aria-pressed='true'],
+  .choice:active {
+    translate: none;
   }
 }
 
@@ -465,6 +525,59 @@
 .rr-navigation .rr-tab:hover { background: var(--color-app-background); }
 .rr-navigation .rr-tab[aria-current='page'] { background: var(--color-app-tint); color: var(--color-brand); }
 .rr-navigation .rr-tab svg { width: 19px; height: 19px; }
+/* The current tab sits pressed in. */
+.rr-navigation .rr-tab[aria-current='page'] { box-shadow: inset 0 2px 0 color-mix(in oklab, var(--color-brand) 22%, transparent); }
+/* Patterns bars: a visible edge, so they read as solid bars. */
+.rr-bar { transform-origin: 0 50%; box-shadow: 0 3px 0 color-mix(in oklab, var(--color-brand) 60%, black); }
+
+/* Solid type: every letter in the app has depth, extruded toward the bottom right. */
+.rr-app { text-shadow: 0 1px 0 color-mix(in oklab, var(--color-brand) 12%, transparent); }
+.rr-app :is(h2, h3, legend, thead th) {
+  text-shadow: 1px 1px 0 color-mix(in oklab, var(--color-brand) 22%, white), 2px 2px 0 color-mix(in oklab, var(--color-brand) 38%, white);
+}
+.rr-app h1 {
+  text-shadow:
+    1px 1px 0 color-mix(in oklab, var(--color-brand) 22%, white),
+    2px 2px 0 color-mix(in oklab, var(--color-brand) 38%, white),
+    3px 3px 0 color-mix(in oklab, var(--color-brand) 55%, white);
+}
+.rr-app :is(time, [data-mono], .tabular-nums, td) { text-shadow: 1px 1px 0 color-mix(in oklab, var(--color-brand) 25%, white); }
+.rr-app :is(.btn-primary, .key:not(.key-light)) {
+  text-shadow: 1px 1px 0 color-mix(in oklab, var(--color-brand) 55%, black), 2px 2px 0 color-mix(in oklab, var(--color-brand) 40%, black);
+}
+.rr-app :is(.btn-secondary, .key-light, .rr-tab, .chip) { text-shadow: 1px 1px 0 color-mix(in oklab, var(--color-brand) 18%, white); }
+.rr-app .btn[aria-pressed='true'] {
+  text-shadow: 1px 1px 0 color-mix(in oklab, var(--color-overdue) 55%, black), 2px 2px 0 color-mix(in oklab, var(--color-overdue) 40%, black);
+}
+.rr-app .btn:disabled { text-shadow: none; }
+
+/* The direct parent of anything that tilts toward the mouse gives it a perspective (tilt.ts). */
+.rr-app :has(> :is(.btn, .key, .choice, .record, .rr-tab)) { perspective: 900px; }
+
+/* ============================================================
+   3D motion in the app comes from taps and screen changes, never from scrolling.
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  .rr-navigation .rr-tab { transition: translate 90ms ease, rotate 140ms ease-out, background-color 140ms ease; }
+  .rr-navigation .rr-tab:active { translate: 0 2px; }
+  .record { transition: rotate 160ms ease-out, translate 90ms ease; }
+  .record:has(> label:active) { translate: 0 2px; }
+
+  /* A new screen turns in like a page. */
+  .rr-screen { transform-origin: 0 50%; animation: rr-turn 320ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+  @keyframes rr-turn { from { transform: perspective(70rem) rotateY(-12deg) translateX(1.5rem); opacity: 0; } }
+
+  /* Records are dealt in, one after another. */
+  .record { transform-origin: 50% 0; animation: rr-deal 340ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+  li.record:nth-child(2) { animation-delay: 50ms; }
+  li.record:nth-child(3) { animation-delay: 100ms; }
+  li.record:nth-child(4) { animation-delay: 150ms; }
+  li.record:nth-child(n + 5) { animation-delay: 200ms; }
+  @keyframes rr-deal { from { transform: perspective(60rem) rotateX(-16deg) translateY(0.75rem); opacity: 0; } }
+
+  .rr-bar { animation: rr-grow 600ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+  @keyframes rr-grow { from { transform: scaleX(0); } }
+}
 @media (max-width: 767px) {
   .rr-navigation { width: 100%; gap: 0; }
   .rr-navigation .rr-tab { flex: 1; min-width: 0; flex-direction: column; gap: 0.25rem; font-size: 0.6875rem; padding: 0.625rem 0.125rem; border-radius: 0; min-height: 64px; }

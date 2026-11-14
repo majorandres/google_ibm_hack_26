@@ -35,10 +35,10 @@ export default function Home({
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <button type="button" onClick={() => onNavigate('log')} className="inline-flex items-center gap-2 [&_svg]:size-4 min-h-16 justify-between rounded-lg bg-brand px-5 text-base font-semibold text-app-surface shadow-none hover:bg-brand-hover">
+        <button type="button" onClick={() => onNavigate('log')} className="inline-flex items-center gap-2 [&_svg]:size-4 min-h-16 justify-between rounded-lg bg-brand px-5 text-base font-semibold text-app-surface key hover:bg-brand-hover">
           <span className="flex items-center gap-3"><Plus aria-hidden="true" />Log a ride</span><ArrowRight aria-hidden="true" />
         </button>
-        <button type="button" onClick={() => onNavigate('talk')} className="inline-flex items-center gap-2 [&_svg]:size-4 border min-h-16 justify-between rounded-lg border-app-line bg-app-surface px-5 text-base font-semibold text-brand shadow-none hover:bg-app-tint">
+        <button type="button" onClick={() => onNavigate('talk')} className="inline-flex items-center gap-2 [&_svg]:size-4 border min-h-16 justify-between rounded-lg border-app-line bg-app-surface px-5 text-base font-semibold text-brand key key-light hover:bg-app-tint">
           <span className="flex items-center gap-3"><Mic aria-hidden="true" />Talk instead</span><ArrowRight aria-hidden="true" />
         </button>
       </div>

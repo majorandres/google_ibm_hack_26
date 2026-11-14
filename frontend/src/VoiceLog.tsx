@@ -129,7 +129,7 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
       )}
 
       {result && (
-        <section aria-labelledby="confirm-heading" className="space-y-4 rounded-lg border border-app-line p-4">
+        <section aria-labelledby="confirm-heading" className="slab space-y-4 rounded-lg border border-app-line p-4">
           <h2 id="confirm-heading" className="text-2xl font-semibold">
             Check and save
           </h2>
