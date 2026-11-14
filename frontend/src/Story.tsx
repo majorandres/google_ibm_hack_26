@@ -321,7 +321,9 @@ export default function Story() {
   useEffect(() => {
     const el = root.current
     if (!el) return
-    const io = new IntersectionObserver(([e]) => setInView(!!e?.isIntersecting), { threshold: 0 })
+    // The bar shows only while the story covers the middle half of the screen, so it never sits
+    // over the hero above or the section after it.
+    const io = new IntersectionObserver(([e]) => setInView(!!e?.isIntersecting), { rootMargin: '-25% 0px -25% 0px' })
     io.observe(el)
     const onScroll = () => {
       const chapters = el.querySelectorAll<HTMLElement>('.st-ch')

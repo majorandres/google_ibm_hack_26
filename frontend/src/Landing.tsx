@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ClipboardCheck } from 'lucide-react'
+import DotField from './DotField'
 import Story from './Story'
 
 /**
@@ -161,7 +162,8 @@ function AppReveal() {
 
 export default function Landing() {
   return (
-    <div className="lp">
+    // id="top" is on the page itself, not <main>, so "Back to top" lands above the header.
+    <div id="top" className="lp">
       <style>{`
         .lp {
           /* The app's tokens (index.css), so one scheme change restyles both. */
@@ -199,7 +201,12 @@ export default function Landing() {
         .lp-header-cta:hover { background: var(--blue-dark); }
 
         /* Hero */
-        .lp-hero { padding: 4rem 0 2rem; text-align: center; }
+        /* The hero fills the first screen under the header (5rem), so the story starts below the fold.
+           svh: the smallest viewport height, so a phone's browser bars never push the story into view. */
+        .lp-hero {
+          min-height: calc(100svh - 5rem); padding-block: 2rem 4rem;
+          display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+        }
         .lp-hero h1 {
           font-size: clamp(2.5rem, 6vw, 4.25rem); font-weight: 700;
           letter-spacing: -0.03em; line-height: 1.02; margin: 0;
@@ -251,17 +258,32 @@ export default function Landing() {
         .lp-chip-ok { background: color-mix(in oklab, var(--color-filed) 12%, var(--paper)); color: var(--color-filed); }
 
         /* Sections */
-        .lp-section { padding: 6rem 0; }
-        .lp-section h2 { font-size: clamp(1.875rem, 4vw, 2.75rem); letter-spacing: -0.02em; line-height: 1.1; margin: 0 0 0.75rem; }
-        .lp-section-lead { color: var(--muted); font-size: 1.125rem; margin: 0 0 3rem; max-width: 40rem; }
+        /* Big, tight headings and leads (from the cool-ui branch), so each section fills the screen. */
+        .lp-section { padding-block: 6rem; } /* block only, so .lp-wrap keeps its side gutter on phones */
+        .lp-section h2, .lp-reveal h2, .lp-band h2 { font-size: clamp(2.5rem, 7vw, 4.5rem); font-weight: 600; letter-spacing: -0.04em; line-height: 0.98; }
+        .lp-section h2 { margin: 0 0 1rem; }
+        .lp-section-lead {
+          color: var(--ink); font-weight: 600; font-size: clamp(1.25rem, 2.4vw, 1.75rem); line-height: 1.15;
+          letter-spacing: -0.02em; margin: 0 0 3rem; max-width: 44rem;
+        }
 
-        .lp-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; list-style: none; padding: 0; margin: 0; }
-        @media (max-width: 860px) { .lp-steps { grid-template-columns: 1fr; } }
-        .lp-step { border: 1px solid var(--line); border-radius: 1rem; padding: 2rem; }
-        .lp-step-icon { width: 48px; height: 48px; color: var(--blue); }
-        .lp-step h3 { font-size: 1.25rem; margin: 1.25rem 0 0.5rem; }
-        .lp-step p { color: var(--muted); margin: 0; }
+        /* How it works: full-width rows split by ink rules, the icon in its own column */
+        .lp-steps { list-style: none; padding: 0; margin: 0; border-bottom: 1px solid var(--ink); }
+        .lp-step {
+          display: grid; grid-template-columns: 7rem 1fr; column-gap: 1.5rem; align-items: start;
+          border-top: 1px solid var(--ink); padding: 2rem 0;
+        }
+        .lp-step > div { grid-column: 1; grid-row: 1 / span 3; }
+        .lp-step > :not(div) { grid-column: 2; }
+        .lp-step-icon { width: 4.5rem; height: 4.5rem; color: var(--blue); }
+        .lp-step h3 { margin: 0.25rem 0 0; font-size: clamp(1.75rem, 4.5vw, 3rem); font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+        .lp-step p { color: var(--muted); font-size: 1.125rem; margin: 0.75rem 0 0; max-width: 40rem; }
         .lp-step-num { font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: var(--blue); font-size: 0.875rem; letter-spacing: 0.12em; }
+        @media (max-width: 640px) {
+          .lp-step { grid-template-columns: 1fr; row-gap: 0.75rem; }
+          .lp-step > div, .lp-step > :not(div) { grid-column: 1; grid-row: auto; }
+          .lp-step-icon { width: 3.5rem; height: 3.5rem; }
+        }
 
         .lp-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; list-style: none; padding: 0; margin: 0; }
         @media (max-width: 860px) { .lp-stats { grid-template-columns: 1fr; } }
@@ -275,29 +297,44 @@ export default function Landing() {
         .lp-stats-note a { color: var(--blue); text-decoration: underline; text-underline-offset: 2px; }
 
         /* FAQ */
-        .lp-faq { max-width: 48rem; }
-        .lp-faq details { border-bottom: 1px solid var(--line); }
+        /* FAQ: full width, big questions, split by ink rules */
+        .lp-faq { border-top: 1px solid var(--ink); }
+        .lp-faq details { border-bottom: 1px solid var(--ink); }
         .lp-faq summary {
           cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between;
-          gap: 1rem; min-height: 56px; padding: 1rem 0; font-weight: 600; font-size: 1.125rem;
+          gap: 1rem; min-height: 56px; padding: 1.5rem 0; font-weight: 600;
+          font-size: clamp(1.25rem, 3vw, 2rem); letter-spacing: -0.02em; line-height: 1.15;
         }
         .lp-faq summary::-webkit-details-marker { display: none; }
-        .lp-faq summary::after { content: "+"; font-size: 1.5rem; color: var(--blue); flex: none; }
+        .lp-faq summary::after { content: "+"; font-size: 1.15em; color: var(--blue); flex: none; }
         .lp-faq details[open] summary::after { content: "−"; }
-        .lp-faq details p { color: var(--muted); margin: 0 0 1.25rem; max-width: 40rem; }
+        .lp-faq details p { color: var(--muted); font-size: 1.125rem; margin: 0 0 1.5rem; max-width: 44rem; }
 
-        /* CTA band + footer */
-        .lp-band { background: var(--blue); color: var(--paper); padding: 5rem 0; text-align: center; }
-        .lp-band h2 { font-size: clamp(1.875rem, 4vw, 2.75rem); letter-spacing: -0.02em; margin: 0 0 1rem; }
-        .lp-band p { color: color-mix(in oklab, var(--paper) 85%, var(--blue)); font-size: 1.125rem; margin: 0 0 2rem; }
+        /* Closing panel: an inset brand slab, most of a screen tall */
+        .lp-band {
+          display: flex; align-items: center; min-height: 80dvh; margin: 0 1.5rem 1.5rem; padding: 5rem 0;
+          border-radius: 1rem; background: var(--blue); color: var(--paper);
+        }
+        .lp-band > .lp-wrap { width: 100%; }
+        .lp-band h2 { margin: 0 0 1.5rem; max-width: 18ch; }
+        .lp-band p { color: color-mix(in oklab, var(--paper) 85%, var(--blue)); font-size: 1.25rem; margin: 0 0 2rem; max-width: 36rem; }
+        @media (max-width: 640px) { .lp-band { margin: 0 0.75rem 0.75rem; min-height: 70dvh; } }
+        /* A deeper gold than the brand yellow, to sit at the royal blue's depth.
+           Derived from the yellow token, so a scheme change still carries through. */
+        .lp-band { --gold: var(--yellow); } /* browsers without relative colours keep the brand yellow */
+        @supports (color: oklch(from red l c h)) {
+          .lp-band { --gold: oklch(from var(--yellow) calc(l - 0.08) calc(c * 0.85) calc(h - 10)); }
+        }
         .lp-band-cta {
           display: inline-flex; align-items: center; justify-content: center; min-height: 56px;
-          padding: 0 2.25rem; background: var(--yellow); color: var(--ink);
+          padding: 0 2.25rem; background: var(--gold); color: var(--ink);
           font-size: 1.125rem; font-weight: 700; border-radius: 0.75rem; text-decoration: none;
         }
-        .lp-band-cta:hover { filter: brightness(1.05); }
-        .lp a.lp-band-cta:focus-visible { outline-color: var(--yellow); }
+        .lp-band-cta:hover { filter: brightness(1.06); }
+        .lp a.lp-band-cta:focus-visible { outline-color: var(--gold); }
         .lp-footer { border-top: 1px solid var(--line); padding: 2rem 0; }
+        /* Content sits above the fixed dot field (DotField.tsx). */
+        .lp > header, .lp > main, .lp > footer { position: relative; z-index: 1; }
         .lp-footer-inner {
           display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;
           font-size: 0.875rem; color: var(--muted);
@@ -313,9 +350,22 @@ export default function Landing() {
           /* The 3D phone's own turn is its entrance, so it skips the fade and rise. */
           .lp-phone-wrap.lp-phone-3d { opacity: 1; transform: none; transition: none; }
           .lp-cta, .lp-header-cta, .lp-band-cta { transition: background 150ms ease, filter 150ms ease; }
+          /* Steps rise as they scroll in. Browsers without scroll timelines just show them. */
+          @supports (animation-timeline: view()) {
+            @keyframes lp-rise { from { opacity: 0; translate: 0 0.75rem; } }
+            .lp-step { animation: lp-rise linear both; animation-timeline: view(); animation-range: entry 10% cover 30%; }
+          }
+          /* FAQ answers open smoothly where supported, instantly elsewhere. */
+          .lp-faq { interpolate-size: allow-keywords; }
+          .lp-faq details::details-content {
+            height: 0; overflow: clip;
+            transition: height 250ms cubic-bezier(0.23, 1, 0.32, 1), content-visibility 250ms allow-discrete;
+          }
+          .lp-faq details[open]::details-content { height: auto; }
         }
       `}</style>
 
+      <DotField />
       <header className="lp-header">
         <a href="#top" className="lp-logo">
           {/* The same clipboard mark as the app's header (App.tsx). */}
@@ -329,7 +379,7 @@ export default function Landing() {
         </a>
       </header>
 
-      <main id="top">
+      <main>
         {/* 1. Hero + scroll-driven bus scene */}
         <section className="lp-hero lp-wrap" aria-labelledby="lp-hero-h">
           <h1 id="lp-hero-h">
