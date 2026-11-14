@@ -81,6 +81,31 @@ Every animation has a still version. `prefers-reduced-motion: reduce` zeroes all
 transitions and the button press. `forced-colors: active` is honoured rather
 than fought.
 
+Tokens (in `@theme`): `--ease-swift` `cubic-bezier(0.23, 1, 0.32, 1)`, `--dur-1`
+150ms (feedback), `--dur-2` 250ms (entrances, screen changes), `--dur-3` 600ms
+(bars, hero).
+
+| Class | Use |
+|---|---|
+| `fx-rise` | entrance: fade and rise. Set `--i` to the item's index to stagger (60ms steps, capped at 8). |
+| `fx-grow` | bars and deadline rules grow from the left. |
+| `fx-lift` | hover lift for buttons and cards. |
+| `fx-pulse` | the record button while recording. The label changes too, so it is never the only signal. |
+| `fx-aurora` | decorative drifting colour behind the landing hero. `aria-hidden`, hidden in forced colours. |
+
+Rules:
+
+- All of it sits inside `@media (prefers-reduced-motion: no-preference)`.
+- Base styles keep content visible. Only a keyframe `from` may hide something,
+  so a browser that skips the animation still shows everything.
+- `fx-aurora` is capped at `opacity: 0.2`. At that cap the darkest it can get is
+  20% brand blue over white, where the hero subtitle (`#475467`) is 5.45:1
+  (calculated, not sampled). If you raise the opacity, re-measure.
+- Screen changes go through `withTransition` in `frontend/src/motion.ts` (View
+  Transitions API). Scroll reveals on the landing page use CSS scroll timelines
+  behind `@supports`. Both are progressive: a browser without them (Firefox, at
+  the time of writing) changes screens instantly and shows the content unanimated.
+
 ## Still to do
 
 1. `TripForm.tsx`, `VoiceLog.tsx`, `Complaints.tsx`, `Dashboard.tsx` still use
