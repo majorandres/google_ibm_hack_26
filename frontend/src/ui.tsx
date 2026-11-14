@@ -1,5 +1,5 @@
 import { useId, type ReactNode } from 'react'
-import { Check, type LucideIcon } from 'lucide-react'
+import { Check, ClipboardCheck, type LucideIcon } from 'lucide-react'
 
 // Shared styles. Controls are 52-56px tall with a visible focus ring.
 // Classes come from the design system in index.css.
@@ -26,6 +26,15 @@ export function Choice(props: {
       />
       <span>{props.children}</span>
     </label>
+  )
+}
+
+/** The RideRecord mark. One definition, so the welcome page and the app cannot drift apart. */
+export function Logo() {
+  return (
+    <span className="flex size-9 flex-none items-center justify-center rounded-lg bg-brand text-app-surface">
+      <ClipboardCheck className="size-5" aria-hidden="true" />
+    </span>
   )
 }
 

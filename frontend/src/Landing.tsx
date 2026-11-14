@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Logo } from './ui'
 
 /**
  * Landing page: one scroll-driven story. Light, royal blue + yellow brand.
@@ -351,7 +352,7 @@ export default function Landing() {
           display: flex; align-items: center; justify-content: space-between;
           padding: 1rem 1.5rem; max-width: 72rem; margin: 0 auto;
         }
-        .lp-logo { display: flex; align-items: center; gap: 0.6rem; font-weight: 700; font-size: 1.125rem; color: var(--ink); text-decoration: none; }
+        .lp-logo { display: flex; align-items: center; gap: 0.6rem; font-weight: 700; font-size: 1.25rem; color: var(--ink); text-decoration: none; }
         .lp-header-cta {
           display: inline-flex; align-items: center; min-height: 48px; padding: 0 1.25rem;
           background: var(--blue); color: #fff; font-weight: 600; border-radius: 0.625rem; text-decoration: none;
@@ -515,16 +516,8 @@ export default function Landing() {
       `}</style>
 
       <header className="lp-header">
-        <a href="#top" className="lp-logo">
-          {/* Minimal wolverine-riding-a-bus mark */}
-          <svg width="34" height="34" viewBox="0 0 48 48" aria-hidden="true">
-            <rect x="4" y="16" width="40" height="20" rx="5" fill="#101828" />
-            <rect x="9" y="21" width="9" height="7" rx="1.5" fill="#fff" />
-            <rect x="21" y="21" width="9" height="7" rx="1.5" fill="#fff" />
-            <circle cx="14" cy="38" r="4" fill="#101828" />
-            <circle cx="34" cy="38" r="4" fill="#101828" />
-            <path d="M20 14c2-5 6-7 9-6-1 2-1 4 1 5-2 1-4 1-6 0-1 1-3 2-4 1z" fill="#101828" />
-          </svg>
+        <a href="#top" className="lp-logo lp-display">
+          <Logo />
           RideRecord
         </a>
         <a href="#app" className="lp-header-cta">

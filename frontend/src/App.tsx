@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, ChartNoAxesCombined, ClipboardCheck, Home as HomeIcon, Mic, Plus, FileText, UserRound } from 'lucide-react'
+import { ArrowUpRight, ChartNoAxesCombined, Home as HomeIcon, Mic, Plus, FileText, UserRound } from 'lucide-react'
 import { api, type Provider } from './api'
 import Complaints from './Complaints'
 import Dashboard from './Dashboard'
 import Home from './Home'
 import { withTransition } from './motion'
 import TripForm from './TripForm'
-import { Status } from './ui'
+import { Logo, Status } from './ui'
 import VoiceLog from './VoiceLog'
 
 const SCREENS = [
@@ -60,7 +60,7 @@ export default function App() {
       <header className="border-b border-app-line bg-app-surface">
         <div className="mx-auto flex min-h-20 max-w-6xl items-center justify-between gap-4 px-5 md:px-8">
           <a href="#" className="flex items-center gap-2.5 font-display text-xl font-bold text-app-ink">
-            <span className="flex size-9 items-center justify-center rounded-lg bg-brand text-app-surface"><ClipboardCheck className="size-5" aria-hidden="true" /></span>
+            <Logo />
             RideRecord
           </a>
           <div className="hidden md:block">{navigation}</div>
