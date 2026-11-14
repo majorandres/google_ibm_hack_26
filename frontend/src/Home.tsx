@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react'
 import { api, outcomeLabel, type Provider, type Trip } from './api'
-import { Status, StatusChip } from './ui'
-import { ArrowRight, Mic, Plus } from 'lucide-react'
+import { More, Status, StatusChip } from './ui'
+import { ArrowRight, ChartNoAxesCombined, FileText, Mic, Plus } from 'lucide-react'
+
+const FEATURES = [
+  { id: 'log', icon: Plus, title: 'Log a ride', blurb: 'A few taps' },
+  { id: 'talk', icon: Mic, title: 'Talk instead', blurb: 'Say what happened' },
+  { id: 'complain', icon: FileText, title: 'Complaints', blurb: 'Draft a letter' },
+  { id: 'data', icon: ChartNoAxesCombined, title: 'Patterns', blurb: 'See the trends' },
+] as const
 
 /**
  * Home: the screen the app opens on. A greeting, the two ways to log a ride,
@@ -13,7 +20,7 @@ export default function Home({
   onNavigate,
 }: {
   providers: Provider[]
-  onNavigate: (screen: 'log' | 'talk') => void
+  onNavigate: (screen: (typeof FEATURES)[number]['id']) => void
 }) {
   // null until the first load settles, so "no rides" never flashes while loading or after a failure.
   const [trips, setTrips] = useState<Trip[] | null>(null)
@@ -35,26 +42,32 @@ export default function Home({
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <button type="button" onClick={() => onNavigate('log')} className="inline-flex items-center gap-2 [&_svg]:size-4 min-h-16 justify-between rounded-lg bg-brand px-5 text-base font-semibold text-app-surface shadow-none hover:bg-brand-hover">
-          <span className="flex items-center gap-3"><Plus aria-hidden="true" />Log a ride</span><ArrowRight aria-hidden="true" />
-        </button>
-        <button type="button" onClick={() => onNavigate('talk')} className="inline-flex items-center gap-2 [&_svg]:size-4 border min-h-16 justify-between rounded-lg border-app-line bg-app-surface px-5 text-base font-semibold text-brand shadow-none hover:bg-app-tint">
-          <span className="flex items-center gap-3"><Mic aria-hidden="true" />Talk instead</span><ArrowRight aria-hidden="true" />
-        </button>
+        {FEATURES.map((f, i) => (
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => onNavigate(f.id)}
+            className="feature fx-rise"
+            data-primary={i === 0 || undefined}
+            style={{ ['--i' as string]: i }}
+          >
+            <f.icon aria-hidden="true" />
+            <span className="feature-title">{f.title}</span>
+            <span className="feature-blurb">{f.blurb}</span>
+            <ArrowRight className="feature-arrow" aria-hidden="true" />
+          </button>
+        ))}
       </div>
 
-      <section aria-labelledby="recent-heading" className="border-t border-app-line pt-7">
-        <h2 id="recent-heading" className="text-xl font-semibold">
-          Your recent rides
-        </h2>
+      <More summary="Your recent rides" open className="center">
         {error && <Status error>Could not load your rides. {error}</Status>}
         {trips === null && !error && <p className="mt-3">Loading your rides…</p>}
         {trips?.length === 0 && (
           <p className="mt-3">No rides logged yet. Your last few rides will show up here.</p>
         )}
-        <ul className="mt-3 grid gap-3">
-          {trips?.map((t) => (
-            <li key={t.id} className="record">
+        <ul className="grid gap-3">
+          {trips?.map((t, i) => (
+            <li key={t.id} className="record fx-rise" style={{ ['--i' as string]: i }}>
               <div className="record-head items-center justify-between">
                 <span className="font-semibold leading-snug">
                   <time dateTime={t.trip_date}>{t.trip_date}</time> · {providerName(t.provider_id)} ·{' '}
@@ -79,7 +92,7 @@ export default function Home({
             </li>
           ))}
         </ul>
-      </section>
+      </More>
     </div>
   )
 }

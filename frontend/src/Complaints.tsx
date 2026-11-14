@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, outcomeLabel, type Channel, type Complaint, type Provider, type Trip } from './api'
-import { button, buttonSecondary, Deadline, input, Status, StatusChip } from './ui'
+import { ListChecks, Mail } from 'lucide-react'
+import { button, buttonSecondary, Card, Deadline, input, More, Status, StatusChip } from './ui'
 
 const days = (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`
 
@@ -131,14 +132,15 @@ export default function Complaints({ providers }: { providers: Provider[] }) {
   }
 
   return (
-    <div className="space-y-6">
-      <fieldset>
-        <legend className="mb-2 text-xl font-semibold">Pick the rides to include (one ride service per complaint)</legend>
+    <div className={complaint ? 'split' : 'center'}>
+      <div className="space-y-4">
+      <Card icon={ListChecks} title="Pick the rides to include" role="group">
+        <p className="hint mb-3 mt-0">One ride service per complaint.</p>
         {trips === null && !status.error && <p>Loading your rides…</p>}
         {trips?.length === 0 && <p>No problem rides logged yet. Rides you log as late, missed or denied show up here.</p>}
         <ul className="grid gap-3">
-          {trips?.map((t) => (
-            <li key={t.id} className="record">
+          {trips?.map((t, i) => (
+            <li key={t.id} className="record fx-rise" style={{ ['--i' as string]: i }}>
               {/* The whole head is the checkbox's label, so the tap target is the full width of the record.
                   It tints on press, before the checkbox changes, so a tap is answered straight away. */}
               <label className="record-head cursor-pointer items-center justify-start rounded-t-record transition-colors duration-150 active:bg-tint has-checked:bg-tint">
@@ -175,7 +177,7 @@ export default function Complaints({ providers }: { providers: Provider[] }) {
             </li>
           ))}
         </ul>
-      </fieldset>
+      </Card>
 
       <button type="button" onClick={draft} disabled={busy || selected.length === 0} className={`${button} btn-block`}>
         {busy ? 'Writing…' : 'Draft my complaint'}
@@ -183,26 +185,7 @@ export default function Complaints({ providers }: { providers: Provider[] }) {
       <Status error={status.error}>{status.text}</Status>
 
       {complaint && (
-        // Arrives with a short fade and rise so it does not pop in after the wait. Reduced motion stills it (index.css).
-        <section
-          aria-labelledby="draft-heading"
-          className="record transition-[opacity,translate] duration-250 ease-[cubic-bezier(0.23,1,0.32,1)] starting:translate-y-2 starting:opacity-0"
-        >
-          <header className="record-head flex-wrap">
-            <h2 id="draft-heading">Send it to: {complaint.channel.name}</h2>
-            <span className="record-id">DRAFT · NOT SENT</span>
-          </header>
-          <div className="record-body space-y-4">
-            <div>
-              <FilingWindow daysLeft={complaint.days_left} deadlineDays={complaint.channel.deadline_days} />
-              {complaint.days_left !== null && (
-                <p className="hint">
-                  Counted from the oldest ride you picked. {complaint.channel.deadline_note}
-                </p>
-              )}
-            </div>
-            <ChannelDetails channel={complaint.channel} />
-
+        <Card icon={Mail} title="Your letter" className="space-y-4">
             <p className="font-semibold text-rust">{complaint.disclaimer}</p>
             <div>
               <label htmlFor="draft-letter" className="label">
@@ -231,9 +214,40 @@ export default function Complaints({ providers }: { providers: Provider[] }) {
             </div>
             <p>RideRecord never sends anything for you. You review it and you send it.</p>
 
-            {complaint.escalation && (
+        </Card>
+      )}
+
+      </div>
+
+      <div className="space-y-4">
+      {complaint && (
+        // Arrives with a short fade and rise so it does not pop in after the wait. Reduced motion stills it (index.css).
+        <section
+          aria-labelledby="draft-heading"
+          className="record transition-[opacity,translate] duration-(--dur-2) ease-swift starting:translate-y-2 starting:opacity-0"
+        >
+          <header className="record-head flex-wrap">
+            <h2 id="draft-heading">Send it to: {complaint.channel.name}</h2>
+            <span className="record-id">DRAFT · NOT SENT</span>
+          </header>
+          <div className="record-body space-y-4">
+            <div>
+              <FilingWindow daysLeft={complaint.days_left} deadlineDays={complaint.channel.deadline_days} />
+              {complaint.days_left !== null && (
+                <p className="hint">
+                  Counted from the oldest ride you picked. {complaint.channel.deadline_note}
+                </p>
+              )}
+            </div>
+            <ChannelDetails channel={complaint.channel} />
+          </div>
+        </section>
+      )}
+
+            {complaint?.escalation && (
+              <More summary="If you get no answer">
               <p>
-                <span className="font-semibold">If you get no answer:</span> {complaint.escalation.name}
+                {complaint.escalation.name}
                 {complaint.escalation.phone && (
                   <>
                     ,{' '}
@@ -244,10 +258,9 @@ export default function Complaints({ providers }: { providers: Provider[] }) {
                 )}
                 . {complaint.escalation.notes}.
               </p>
+              </More>
             )}
-          </div>
-        </section>
-      )}
+      </div>
     </div>
   )
 }

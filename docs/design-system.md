@@ -13,7 +13,25 @@ because a record is a document rather than a bubble.
 Users are riders with disabilities and their caregivers. Everything is sized for
 one thumb on a phone at a bus stop.
 
-## Palette — Great Lakes blue and limestone
+## The look now — monochrome
+
+Black on white, one typeface (Inter), very large tight headings, black label
+blocks for the landing headline, rows split by black rules, a floating black bar
+at the bottom of the landing page and a halftone dot field behind it (`DotField`
+in `Landing.tsx`). The direction is borrowed from romainavalle.dev; the code,
+artwork and typeface are our own.
+
+The live values are the `--color-brand*` and `--color-app-*` tokens at the top
+of `@theme` in `index.css`, and the `--blue` / `--ink` / `--muted` variables at
+the top of the landing page's style block. Status colours (`filed`, `overdue`,
+`pending`) and the red in the scroll scene are the only colour left, because
+they carry meaning.
+
+Measured: ink `#0a0a0a` on white 19.8:1; muted `#525252` on white 7.8:1 and on a
+dot or hairline (`#d4d4d4`) 5.3:1; `#a3a3a3` on ink 7.9:1 (the grey words in the
+headline). The dot field is `#d4d4d4` so text over a dot still passes.
+
+## Palette — Great Lakes blue and limestone (original tokens, mostly overridden)
 
 | Token | Hex | Use |
 |---|---|---|
@@ -72,6 +90,28 @@ Body floor is 17px. Headings use `clamp()` with negative tracking.
   hexagon.
 - `.deadline` — time until the agency's response deadline as a rule, not a
   number. Set `--pct` inline; put the accessible name on the parent.
+- `.card` (`Card` in `ui.tsx`) — one module of a screen: an icon, a short title
+  and one job. A screen is a few cards, not a run of text. `done` swaps the icon
+  for a tick once a question is answered.
+- `.more` (`More` in `ui.tsx`) — a native `<details>` for explanation the rider
+  can open when they want it. Never put a disclaimer, a deadline or the "demo
+  data" notice inside one; those stay visible.
+- `.feature` — the four tiles on Home, one per part of the app. A tile fills
+  with black from the left on hover or keyboard focus and its arrow nudges
+  right. The first tile is filled from the start because logging is the main job.
+- `DotField` (`ui.tsx`, `.dots`) — the halftone field behind the landing page
+  and the app. The pattern stays put; the only movement is a swell that follows
+  the pointer or finger. Decorative, `aria-hidden`, still under reduced motion,
+  hidden in forced colours.
+- Frosted boxes — cards, records, collapsed sections and feature tiles use
+  `--frost` (72% white) with a backdrop blur, so the dots show through softly
+  instead of being cut off. The app header and tab bar stay solid, because page
+  text scrolls under them.
+- Placement on wide screens (`.split`, `.split-even`, `.center`) — left is what
+  the rider does, right is what supports it (history, where a complaint goes,
+  how a flag is decided), centre is a single focus or the step that finishes
+  the job (the talk button, Save, picking rides before a draft exists). Wide
+  tables and notices span the full width. Phones keep one column.
 - `.tabbar` / `.tab` — thumb-reachable bottom nav, labels always visible.
 - `.built-with` — the quiet IBM credit line.
 
@@ -80,6 +120,27 @@ Body floor is 17px. Headings use `clamp()` with negative tracking.
 Every animation has a still version. `prefers-reduced-motion: reduce` zeroes all
 transitions and the button press. `forced-colors: active` is honoured rather
 than fought.
+
+Tokens (in `@theme`): `--ease-swift` `cubic-bezier(0.23, 1, 0.32, 1)`, `--dur-1`
+150ms (feedback), `--dur-2` 250ms (entrances, screen changes), `--dur-3` 600ms
+(bars, hero).
+
+| Class | Use |
+|---|---|
+| `fx-rise` | entrance: fade and rise. Set `--i` to the item's index to stagger (60ms steps, capped at 8). |
+| `fx-grow` | bars and deadline rules grow from the left. |
+| `fx-lift` | hover lift for buttons and cards. |
+| `fx-pulse` | the record button while recording. The label changes too, so it is never the only signal. |
+
+Rules:
+
+- All of it sits inside `@media (prefers-reduced-motion: no-preference)`.
+- Base styles keep content visible. Only a keyframe `from` may hide something,
+  so a browser that skips the animation still shows everything.
+- Screen changes go through `withTransition` in `frontend/src/motion.ts` (View
+  Transitions API). Scroll reveals on the landing page use CSS scroll timelines
+  behind `@supports`. Both are progressive: a browser without them (Firefox, at
+  the time of writing) changes screens instantly and shows the content unanimated.
 
 ## Still to do
 

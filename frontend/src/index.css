@@ -8,16 +8,17 @@
    ============================================================ */
 
 @theme {
-  --color-brand: oklch(0.424 0.199 265.638);
-  --color-brand-hover: oklch(0.352 0.16 265.638);
-  --color-brand-highlight: oklch(0.852 0.199 91.936);
-  --color-app-surface: oklch(1 0 0);
-  --color-app-background: oklch(0.977 0.006 264);
-  --color-app-ink: oklch(0.21 0.034 264.665);
-  --color-app-muted: oklch(0.446 0.043 257.281);
-  --color-app-line: oklch(0.928 0.006 264.531);
-  --color-app-tint: oklch(0.932 0.032 265);
-  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  /* Monochrome: black on white, one typeface. Status colours below are the only colour, and they carry meaning. */
+  --color-brand: #0a0a0a;
+  --color-brand-hover: #404040;
+  --color-brand-highlight: #d4d4d4;
+  --color-app-surface: #ffffff;
+  --color-app-background: #ffffff;
+  --color-app-ink: #0a0a0a;
+  --color-app-muted: #525252; /* 7.8:1 on white, 5.3:1 on app-line */
+  --color-app-line: #d4d4d4;
+  --color-app-tint: #ececec;
+  --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
   /* --- surface ------------------------------------------------ */
   --color-limestone: #faf8f4; /* page background, warm not sterile */
   --color-paper: #ffffff; /* raised records */
@@ -56,6 +57,12 @@
      Slightly squared. A record is a document, not a bubble. */
   --radius-field: 0.25rem;
   --radius-record: 0.375rem;
+
+  /* --- motion ------------------------------------------------- */
+  --ease-swift: cubic-bezier(0.23, 1, 0.32, 1);
+  --dur-1: 150ms; /* feedback */
+  --dur-2: 250ms; /* entrances, screen changes */
+  --dur-3: 600ms; /* bars, hero */
 }
 
 @font-face {
@@ -396,8 +403,35 @@
 
 /* ============================================================
    Motion: every animation has a still version.
+   Base styles keep content visible; only a keyframe `from` hides it,
+   so a browser that skips the animation still shows everything.
    ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes rise { from { opacity: 0; translate: 0 0.75rem; } }
+  @keyframes sink { to { opacity: 0; translate: 0 -0.5rem; } }
+  @keyframes grow-x { from { scale: 0 1; } }
+  @keyframes pulse { to { box-shadow: 0 0 0 1rem transparent; } }
+
+  /* Stagger: set --i to the item's index. Capped so long lists never wait. */
+  .fx-rise { animation: rise var(--dur-2) var(--ease-swift) both; animation-delay: calc(min(var(--i, 0), 8) * 60ms); }
+  .fx-grow { transform-origin: left; animation: grow-x var(--dur-3) var(--ease-swift) both; }
+  .fx-lift { transition: translate var(--dur-1) var(--ease-swift), box-shadow var(--dur-1) var(--ease-swift), background-color var(--dur-1) ease; }
+  .fx-lift:hover { translate: 0 -2px; box-shadow: 0 8px 20px -12px var(--color-ink); }
+  .fx-pulse { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-overdue) 50%, transparent); animation: pulse 1.4s ease-out infinite; }
+
+  /* Screen changes (see motion.ts). The active tab slides between positions;
+     the nav renders twice but one copy is always display:none, so the name stays unique. */
+  ::view-transition-old(root) { animation: sink var(--dur-1) var(--ease-swift) both; }
+  ::view-transition-new(root) { animation: rise var(--dur-2) var(--ease-swift) both; }
+  .rr-tab[aria-current='page'] { view-transition-name: active-tab; }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
   *,
   *::before,
   *::after {
@@ -435,8 +469,8 @@
   --color-tint: var(--color-app-tint);
   --color-line: var(--color-app-line);
   --color-line-strong: var(--color-app-muted);
-  --radius-field: 0.5rem;
-  --radius-record: 0.5rem;
+  --radius-field: 0.3rem;
+  --radius-record: 0.3rem;
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   font-size: 1rem;
   letter-spacing: 0;
@@ -445,7 +479,7 @@
   font-family: var(--font-display);
   letter-spacing: 0;
 }
-.rr-app h1 { font-size: 2rem; font-weight: 700; line-height: 1.2; }
+.rr-app h1 { font-size: clamp(2.25rem, 8vw, 3.5rem); font-weight: 600; line-height: 1; letter-spacing: -0.03em; }
 .rr-app h2, .rr-app legend { font-size: 1.25rem; line-height: 1.4; }
 .rr-app .btn { font-size: 1rem; letter-spacing: 0; border-radius: 0.5rem; }
 .rr-app .btn-primary { color: var(--color-app-surface); }
@@ -468,4 +502,169 @@
 @media (max-width: 767px) {
   .rr-navigation { width: 100%; gap: 0; }
   .rr-navigation .rr-tab { flex: 1; min-width: 0; flex-direction: column; gap: 0.25rem; font-size: 0.6875rem; padding: 0.625rem 0.125rem; border-radius: 0; min-height: 64px; }
+}
+
+/* ============================================================
+   Modules: each screen is a few cards, one job per card.
+   Longer explanations sit in .more, closed until asked for.
+   ============================================================ */
+.card {
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: 0.3rem;
+  padding: 1.25rem;
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.875rem;
+}
+.card-icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.3rem;
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+}
+.card-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.card-icon[data-done] {
+  background-color: var(--color-filed);
+  color: #fff;
+}
+.more {
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: 0.3rem;
+}
+.more > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3.5rem;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.more > summary::-webkit-details-marker {
+  display: none;
+}
+.more > summary::after {
+  content: '+';
+  flex: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--color-lake);
+}
+.more[open] > summary::after {
+  content: '−';
+}
+.more > div {
+  padding: 0 1.25rem 1.25rem;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .more { interpolate-size: allow-keywords; }
+  .more::details-content {
+    height: 0;
+    overflow: clip;
+    transition: height var(--dur-2) var(--ease-swift), content-visibility var(--dur-2) allow-discrete;
+  }
+  .more[open]::details-content { height: auto; }
+}
+
+/* ============================================================
+   App effects. Still versions first; motion only where welcome.
+   ============================================================ */
+/* Boxes are frosted, not solid: the dot field shows through, blurred, so it melts
+   behind them. At 72% paper the darkest a dot can make the box is #f3f3f3,
+   where muted text is still 7:1. */
+.rr-app, .lp { --frost: color-mix(in srgb, #ffffff 72%, transparent); }
+.rr-app .card, .rr-app .more, .rr-app .record {
+  background-color: var(--frost);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.dots { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+@media (forced-colors: active) { .dots { display: none; } }
+
+/* the screen title sits in a black label, like the landing headline */
+.rr-app h1 {
+  display: inline-block;
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+  padding: 0.08em 0.3em 0.14em;
+  border-radius: 0.3rem;
+}
+
+/* feature tile: fills with black from the left on hover or focus */
+.feature {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: 0.875rem;
+  min-height: 5rem;
+  padding: 1rem 1.25rem;
+  text-align: left;
+  color: var(--color-ink);
+  border: 1px solid var(--color-ink);
+  border-radius: 0.3rem;
+  background: linear-gradient(var(--color-ink), var(--color-ink)) no-repeat left / 0% 100% var(--frost);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+}
+.feature svg { width: 1.25rem; height: 1.25rem; grid-row: 1 / span 2; }
+.feature-title { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+.feature-blurb { grid-column: 2; font-size: 0.875rem; color: var(--color-app-muted); }
+.feature-arrow { grid-column: 3; }
+.feature:hover, .feature:focus-visible, .feature[data-primary] { background-size: 100% 100%; color: var(--color-paper); }
+.feature:hover .feature-blurb, .feature:focus-visible .feature-blurb, .feature[data-primary] .feature-blurb { color: #d4d4d4; }
+.feature:hover .feature-arrow, .feature:focus-visible .feature-arrow { translate: 0.375rem 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes label-in { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+  @keyframes pop { from { scale: 0.6; } }
+
+  .rr-app h1 { animation: label-in var(--dur-3) var(--ease-swift) both; }
+  .feature { transition: background-size var(--dur-2) var(--ease-swift), color var(--dur-2) ease; }
+  .feature-arrow { transition: translate var(--dur-2) var(--ease-swift); }
+  .rr-tab[aria-current='page'] svg { animation: pop var(--dur-2) var(--ease-swift); }
+
+  /* a chosen answer fills in from the left */
+  .choice {
+    background-image: linear-gradient(var(--color-tint), var(--color-tint));
+    background-repeat: no-repeat;
+    background-size: 0% 100%;
+    transition: background-size var(--dur-2) var(--ease-swift), border-color 140ms ease;
+  }
+  .choice:has(:checked) { background-color: var(--color-paper); background-size: 100% 100%; }
+
+  /* modules rise as they scroll into view; anything already on screen is simply shown */
+  @supports (animation-timeline: view()) {
+    .rr-app .card, .rr-app .more, .rr-app li.record {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+  }
+}
+
+/* Placement on wide screens. Left: what the rider does. Right: what supports it
+   (history, where it goes, how it works). Centre: a single focus, or the step
+   that finishes the job. Phones keep one full-width column. */
+.split, .split-even { display: grid; gap: 1rem; align-items: start; }
+.split > *, .split-even > * { min-width: 0; }
+@media (min-width: 900px) {
+  .split { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 1.5rem; }
+  .split-even { grid-template-columns: 1fr 1fr; }
+  .split-even.stretch { align-items: stretch; } /* a 2x2 of cards: each row's pair shares a height */
+  .center { max-width: 40rem; margin-inline: auto; }
 }

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { api, MAX_TEXT, type Extracted, type Provider } from './api'
 import TripForm from './TripForm'
-import { button, input, Status } from './ui'
+import { Mic } from 'lucide-react'
+import { button, Card, input, More, Status } from './ui'
 
 // Speech to Text cannot read audio/mp4, Safari's default, so ask for a format it can.
 const RECORDING_TYPES = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus']
@@ -85,15 +86,17 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
 
   const incident = result?.incident
   return (
-    <div className="space-y-6">
-      <p className="text-lg">
-        Say what happened in your own words. For example: “My return ride never came and I waited two hours.”
-      </p>
+    <div className="space-y-4">
+      <Card icon={Mic} title="Say what happened" className="center">
+      <p className="hint mb-4 mt-0">For example: “My return ride never came and I waited two hours.”</p>
 
-      <button type="button" onClick={toggleRecording} disabled={busy} aria-pressed={recording} className={`${button} w-full py-6 text-2xl ${recording ? 'bg-overdue hover:bg-overdue/90' : ''}`}>
+      <button type="button" onClick={toggleRecording} disabled={busy} aria-pressed={recording} className={`${button} w-full py-6 text-2xl ${recording ? 'fx-pulse bg-overdue hover:bg-overdue/90' : ''}`}>
         {recording ? 'Stop recording' : 'Tap to talk'}
       </button>
+      </Card>
 
+      <div className="split-even">
+      <More summary="Type it instead">
       <form
         className="space-y-2"
         onSubmit={(e) => {
@@ -101,17 +104,19 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
           if (typed.trim()) void understand(api.extract(typed.trim()))
         }}
       >
-        <label className="block text-xl font-semibold">
-          Or type what happened
+        <label className="block font-semibold">
+          What happened?
           <textarea rows={2} maxLength={MAX_TEXT} value={typed} onChange={(e) => setTyped(e.target.value)} className={`${input} mt-2 font-normal`} />
         </label>
         <button type="submit" disabled={busy || !typed.trim()} className={button}>
           Use this
         </button>
       </form>
+      </More>
 
-      <label className="block text-lg font-semibold">
-        Or upload a recording
+      <More summary="Upload a recording">
+      <label className="block font-semibold">
+        Choose an audio file
         <input
           type="file"
           accept={UPLOAD_TYPES}
@@ -120,6 +125,8 @@ export default function VoiceLog({ providers }: { providers: Provider[] }) {
           className={`${input} mt-2 font-normal`}
         />
       </label>
+      </More>
+      </div>
 
       <Status error={status.error}>{status.text}</Status>
       {result && (

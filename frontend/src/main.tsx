@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import Landing from './Landing.tsx'
+import { withTransition } from './motion'
 
 // Hash, not a path: the backend serves static files with no fallback for /app.
 const isApp = () => ['#app', '#main'].includes(location.hash) // #main is the app's skip link
@@ -15,8 +16,10 @@ function Root() {
       const next = isApp()
       if (next === current) return // in-page jumps (#main, #top) keep their scroll
       current = next
-      setInApp(next)
-      window.scrollTo(0, 0)
+      void withTransition(() => {
+        setInApp(next)
+        window.scrollTo(0, 0)
+      })
     }
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)

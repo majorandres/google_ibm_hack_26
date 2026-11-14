@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { reducedMotion } from './motion'
+import { DotField, Logo } from './ui'
 
 /**
  * Landing page: one scroll-driven story. Light, royal blue + yellow brand.
@@ -73,20 +75,33 @@ const STATS = [
   { caption: 'days is a typical filing window — miss it and the complaint dies.' },
 ] as const
 
+const clamp01 = (x: number) => Math.min(1, Math.max(0, x))
+/** How far p is through the stretch a..b, as 0..1. */
+const span = (p: number, a: number, b: number) => clamp01((p - a) / (b - a))
+const smooth = (t: number) => t * t * (3 - 2 * t)
+
+const BEATS = [
+  { until: 0.3, caption: 'The doctor’s appointment is at 9:00.' },
+  { until: 0.6, caption: 'The ride was supposed to be here by now.' },
+  { until: 0.85, caption: 'The van drives right past.' },
+  { until: Infinity, caption: 'Another missed appointment. No one owns it.' },
+] as const
+
 /**
  * The scroll-driven story, from the pitch's hook: a rider in a powered wheelchair
  * waits for a Medicaid ride to a doctor's appointment. The van drives right past,
  * the appointment is missed — and no one owns it.
+ *
+ * Everything is drawn from one number, p (0..1 scroll progress), so the still
+ * version for reduced motion is just a fixed p.
  */
 function RideScene() {
   const track = useRef<HTMLDivElement>(null)
-  const [p, setP] = useState(0)
+  // Reduced motion: a static midpoint, the van level with the rider and the clock near nine.
+  const [p, setP] = useState(() => (reducedMotion() ? 0.6 : 0))
 
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setP(0.6) // static midpoint: the van passing by, the clock already past nine
-      return
-    }
+    if (reducedMotion()) return
     let raf = 0
     const onScroll = () => {
       cancelAnimationFrame(raf)
@@ -95,8 +110,7 @@ function RideScene() {
         if (!el) return
         const rect = el.getBoundingClientRect()
         const scrollable = rect.height - window.innerHeight
-        const progress = scrollable > 0 ? Math.min(1, Math.max(0, -rect.top / scrollable)) : 0
-        setP(progress)
+        setP(scrollable > 0 ? clamp01(-rect.top / scrollable) : 0)
       })
     }
     onScroll()
@@ -107,97 +121,174 @@ function RideScene() {
     }
   }, [])
 
-  // Phases: 0–0.3 waiting, 0.3–0.6 the van approaches, 0.6–0.85 it drives past, 0.85–1 missed.
-  const vanIn = Math.min(1, Math.max(0, (p - 0.3) / 0.3))
-  const vanPast = Math.min(1, Math.max(0, (p - 0.6) / 0.25))
-  const vanX = -520 + vanIn * 480 + vanPast * 620 // px: off-screen left → beside the rider → off-screen right
-  const missed = p >= 0.85
-  // Clock hands sweep from 8:00 to past 9:00 across the whole scene.
-  const minuteAngle = p * 420 // a little over one full hour of sweep
-  const hourAngle = -120 + p * 45
+  const beat = BEATS.findIndex((b) => p < b.until)
 
-  const caption =
-    p < 0.3
-      ? 'The doctor’s appointment is at 9:00.'
-      : p < 0.6
-        ? 'The ride was supposed to be here by now.'
-        : p < 0.85
-          ? 'The van drives right past.'
-          : 'Another missed appointment. No one owns it.'
+  // Van: slows as it nears the rider, as if it will stop, then pulls away faster and faster.
+  const vanIn = smooth(span(p, 0.3, 0.6))
+  const vanPast = span(p, 0.6, 0.85) ** 2
+  const vanX = -240 + vanIn * 430 + vanPast * 670
+  const wheelSpin = (vanX / 14) * (180 / Math.PI)
+  const rush = Math.sin(Math.sqrt(vanPast) * Math.PI) // speed lines: strongest mid-pass
+
+  // Rider: waves as the van approaches, then the arm drops and the head sinks.
+  const wave = vanIn * (1 - span(p, 0.66, 0.78))
+  const armAngle = 55 - wave * 115 + wave * Math.sin(p * 90) * 12
+  const droop = smooth(span(p, 0.72, 0.9))
+
+  // Clock: 8:00 at the top of the scene, 9:00 exactly when the appointment is lost.
+  const minutes = p * 70
+  const late = minutes >= 60
+  const time = `${late ? 9 : 8}:${String(Math.floor(minutes % 60)).padStart(2, '0')}`
+  const missed = smooth(span(p, 0.85, 0.93))
 
   return (
     <div ref={track} className="lp-scene-track">
       <div className="lp-scene-sticky">
         <svg
-          viewBox="0 0 800 300"
+          viewBox="0 0 800 330"
           role="img"
           aria-label="Illustration: a wheelchair rider waits outside their home for a ride to a doctor's appointment. The van drives past without stopping, and the appointment is missed."
           className="lp-scene-svg"
         >
-          {/* ground */}
-          <line x1="0" y1="250" x2="800" y2="250" stroke="#101828" strokeWidth="3" />
-          {/* home */}
+          <defs>
+            <linearGradient id="lp-sky-dawn" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#e5e5e5" />
+              <stop offset="1" stopColor="#fafafa" />
+            </linearGradient>
+            <linearGradient id="lp-sky-day" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#e5e5e5" />
+              <stop offset="1" stopColor="#ffffff" />
+            </linearGradient>
+          </defs>
+
+          {/* sky: dawn fading into full morning as the hour slips by */}
+          <rect width="800" height="206" fill="url(#lp-sky-dawn)" />
+          <rect width="800" height="206" fill="url(#lp-sky-day)" opacity={p} />
+          <g transform={`translate(${120 + p * 180},${150 - Math.sin((p * Math.PI) / 2) * 105})`}>
+            <circle r="22" fill="#fff" stroke="#0a0a0a" strokeWidth="3" />
+          </g>
+          <g fill="#fff" opacity="0.9" transform={`translate(${p * 50},0)`}>
+            <path d="M150 62 a16 16 0 0 1 30 -8 a20 20 0 0 1 36 8 z" />
+            <path d="M520 44 a14 14 0 0 1 26 -7 a18 18 0 0 1 32 7 z" />
+          </g>
+          {/* far skyline, drifting slower than the street for depth */}
+          <g fill="#0a0a0a" opacity="0.08" transform={`translate(${-p * 24},0)`}>
+            <rect x="170" y="130" width="46" height="76" />
+            <rect x="222" y="104" width="34" height="102" />
+            <rect x="330" y="140" width="60" height="66" />
+            <rect x="500" y="116" width="40" height="90" />
+            <rect x="546" y="146" width="52" height="60" />
+          </g>
+
+          {/* street */}
+          <rect y="212" width="800" height="118" fill="#0a0a0a" />
+          <rect y="200" width="800" height="12" fill="#d0d5dd" />
+          <line x1="0" y1="310" x2="800" y2="310" stroke="#ffffff" strokeWidth="4" strokeDasharray="42 30" />
+
+          {/* home: the window light goes out as the morning wears on */}
           <g>
-            <rect x="40" y="150" width="110" height="100" fill="#e4e7ec" />
-            <path d="M30 150 L95 104 L160 150 Z" fill="#101828" />
-            <rect x="80" y="200" width="30" height="50" fill="#1E40AF" />
+            <rect x="36" y="118" width="112" height="82" fill="#fff" stroke="#0a0a0a" strokeWidth="3" />
+            <path d="M24 120 L92 70 L160 120 Z" fill="#0a0a0a" />
+            <rect x="52" y="136" width="30" height="26" fill="#e5e5e5" stroke="#0a0a0a" strokeWidth="2.5" />
+            <rect x="52" y="136" width="30" height="26" fill="#ffffff" opacity={1 - p} />
+            <rect x="102" y="150" width="30" height="50" fill="#0a0a0a" />
           </g>
-          {/* clinic */}
+
+          {/* clinic: door open, then shut once the appointment is missed */}
           <g>
-            <rect x="640" y="130" width="130" height="120" fill="#e4e7ec" />
-            <rect x="640" y="112" width="130" height="18" fill="#101828" />
-            <rect x="686" y="146" width="38" height="14" rx="2" fill="#b42318" />
-            <rect x="698" y="134" width="14" height="38" rx="2" fill="#b42318" />
-            {/* clinic door: open, then closed once the appointment is missed */}
-            <rect x="688" y="196" width="34" height="54" fill={missed ? '#475467' : '#1E40AF'} />
-            {missed && (
-              <g transform="translate(705,223)">
-                <path d="M-9 -9 L9 9 M9 -9 L-9 9" stroke="#fff" strokeWidth="4" strokeLinecap="round" />
-              </g>
-            )}
+            <rect x="620" y="92" width="150" height="108" fill="#fff" stroke="#0a0a0a" strokeWidth="3" />
+            <rect x="612" y="78" width="166" height="18" rx="3" fill="#0a0a0a" />
+            <rect x="684" y="112" width="22" height="8" rx="2" fill="#b42318" />
+            <rect x="691" y="105" width="8" height="22" rx="2" fill="#b42318" />
+            <rect x="634" y="140" width="30" height="26" fill="#e5e5e5" stroke="#0a0a0a" strokeWidth="2.5" />
+            <rect x="726" y="140" width="30" height="26" fill="#e5e5e5" stroke="#0a0a0a" strokeWidth="2.5" />
+            <rect x="678" y="146" width="34" height="54" fill="#0a0a0a" />
+            <g opacity={missed}>
+              <rect x="678" y="146" width="34" height="54" fill="#475467" />
+              <path d="M687 164 l16 16 m0 -16 l-16 16" stroke="#fff" strokeWidth="4" strokeLinecap="round" />
+            </g>
           </g>
-          {/* clock: the appointment time slipping by */}
-          <g transform="translate(400,74)">
-            <circle r="30" fill="#fff" stroke="#101828" strokeWidth="3" />
-            <line x1="0" y1="0" x2="0" y2="-18" stroke="#101828" strokeWidth="3" strokeLinecap="round" transform={`rotate(${hourAngle})`} />
-            <line x1="0" y1="0" x2="0" y2="-24" stroke="#1E40AF" strokeWidth="2.5" strokeLinecap="round" transform={`rotate(${minuteAngle})`} />
-            <circle r="3" fill="#101828" />
+
+          {/* street clock: turns red at nine */}
+          <g transform="translate(440,0)">
+            <rect x="-3" y="104" width="6" height="96" fill="#0a0a0a" />
+            <circle cy="72" r="34" fill="#fff" stroke={late ? '#b42318' : '#0a0a0a'} strokeWidth="4" />
+            {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((a) => (
+              <line key={a} y1={-28 + 72} y2={-24 + 72} stroke="#0a0a0a" strokeWidth="2" transform={`rotate(${a} 0 72)`} />
+            ))}
+            <line y1="72" y2="54" stroke="#0a0a0a" strokeWidth="4" strokeLinecap="round" transform={`rotate(${-120 + minutes / 2} 0 72)`} />
+            <line y1="72" y2="46" stroke={late ? '#b42318' : '#0a0a0a'} strokeWidth="3" strokeLinecap="round" transform={`rotate(${minutes * 6} 0 72)`} />
+            <circle cy="72" r="3.5" fill="#0a0a0a" />
+            <rect x="-30" y="114" width="60" height="24" rx="5" fill={late ? '#b42318' : '#0a0a0a'} />
+            <text y="131" textAnchor="middle" fill="#fff" fontSize="15" fontWeight="700" fontFamily="ui-monospace, Menlo, monospace">
+              {time}
+            </text>
           </g>
-          {/* wheelchair rider, waiting outside home */}
-          <g transform="translate(230,0)">
-            <circle cx="0" cy="158" r="12" fill="#101828" />
-            <path d="M0 172 v36 h26" fill="none" stroke="#101828" strokeWidth="6" strokeLinecap="round" />
-            <circle cx="6" cy="228" r="20" fill="none" stroke="#101828" strokeWidth="5" />
-            <circle cx="34" cy="240" r="8" fill="none" stroke="#101828" strokeWidth="4" />
+
+          {/* pickup sign */}
+          <g>
+            <rect x="308" y="136" width="4" height="64" fill="#0a0a0a" />
+            <rect x="296" y="112" width="28" height="28" rx="4" fill="#0a0a0a" />
+            <g transform="translate(309,126)" stroke="#fff" strokeWidth="2.2" fill="none" strokeLinecap="round">
+              <circle cy="-7" r="2.4" fill="#fff" stroke="none" />
+              <path d="M0 -3 v6 h6" />
+              <circle cx="1" cy="6" r="5" />
+            </g>
           </g>
-          {/* paratransit van with accessibility symbol */}
-          <g transform={`translate(${vanX},0)`}>
-            <path d="M300 250 v-96 a12 12 0 0 1 12 -12 h118 a12 12 0 0 1 12 12 v22 l26 26 v48 z" fill="#1E40AF" />
-            <rect x="316" y="158" width="44" height="34" rx="4" fill="#dbe4ff" />
-            <rect x="370" y="158" width="44" height="34" rx="4" fill="#dbe4ff" />
-            <path d="M446 158 h18 l20 20 v14 h-38 z" fill="#dbe4ff" />
-            <rect x="316" y="204" width="152" height="9" rx="4.5" fill="#FACC15" />
-            {/* wheelchair symbol on the van door */}
-            <g transform="translate(392,176)" stroke="#1E40AF" strokeWidth="2.5" fill="none" strokeLinecap="round">
-              <circle cx="0" cy="-8" r="3" fill="#1E40AF" stroke="none" />
+
+          {/* the rider, facing the way the ride should come from */}
+          <g transform="translate(262,0) scale(-1,1)" stroke="#0a0a0a" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            <circle cx="0" cy="178" r="22" strokeWidth="5" />
+            <circle cx="32" cy="192" r="8" strokeWidth="4" />
+            <path d="M-12 146 V174 H24 l8 12" strokeWidth="5" />
+            <path d={`M-4 138 V170 H22 l6 16`} strokeWidth="7" />
+            <line x1="-4" y1="146" x2="18" y2="146" strokeWidth="6" transform={`rotate(${armAngle} -4 146)`} />
+            <circle cx={-4 + droop * 4} cy={122 + droop * 5} r="11" fill="#0a0a0a" stroke="none" />
+          </g>
+
+          {/* paratransit van */}
+          <g transform={`translate(${vanX},${Math.sin(vanX / 9) * 1.2})`}>
+            <ellipse cx="94" cy="296" rx="104" ry="5" fill="#000" opacity="0.3" />
+            <g stroke="#fff" strokeWidth="3" strokeLinecap="round" opacity={rush * 0.8}>
+              <line x1="-18" y1="232" x2="-70" y2="232" />
+              <line x1="-10" y1="250" x2="-90" y2="250" />
+              <line x1="-18" y1="268" x2="-60" y2="268" />
+            </g>
+            <path d="M0 280 V226 a12 12 0 0 1 12 -12 H128 a12 12 0 0 1 10 6 L160 246 h18 a10 10 0 0 1 10 10 V280 Z" fill="#0a0a0a" stroke="#ffffff" strokeWidth="3" />
+            <rect x="14" y="224" width="40" height="24" rx="4" fill="#e5e5e5" />
+            <rect x="62" y="224" width="40" height="24" rx="4" fill="#e5e5e5" />
+            <path d="M110 224 h17 l15 24 h-32 z" fill="#e5e5e5" />
+            <rect x="0" y="270" width="188" height="5" fill="#ffffff" />
+            <rect x="181" y="254" width="7" height="9" rx="2" fill="#ffffff" />
+            <g transform="translate(82,259) scale(0.7)" stroke="#fff" strokeWidth="2.5" fill="none" strokeLinecap="round">
+              <circle cy="-8" r="3" fill="#fff" stroke="none" />
               <path d="M0 -4 v7 h7" />
               <circle cx="1" cy="9" r="6" />
             </g>
-            <circle cx="336" cy="250" r="16" fill="#101828" />
-            <circle cx="440" cy="250" r="16" fill="#101828" />
+            {[40, 146].map((cx) => (
+              <g key={cx} transform={`translate(${cx},282) rotate(${wheelSpin})`}>
+                <circle r="14" fill="#0a0a0a" stroke="#475467" strokeWidth="2" />
+                <path d="M-9 0 H9 M0 -9 V9" stroke="#98a2b3" strokeWidth="2.5" strokeLinecap="round" />
+              </g>
+            ))}
           </g>
-          {/* the missed appointment, marked on a calendar */}
-          {missed && (
-            <g transform="translate(520,60)">
-              <rect x="-34" y="-26" width="68" height="60" rx="6" fill="#fff" stroke="#101828" strokeWidth="3" />
-              <rect x="-34" y="-26" width="68" height="16" rx="6" fill="#1E40AF" />
-              <path d="M-14 2 L14 26 M14 2 L-14 26" stroke="#b42318" strokeWidth="5" strokeLinecap="round" />
-            </g>
-          )}
+
+          {/* the missed appointment, stamped on a calendar */}
+          <g transform={`translate(560,56) rotate(${-8 * missed}) scale(${0.6 + 0.4 * missed})`} opacity={missed}>
+            <rect x="-34" y="-28" width="68" height="62" rx="6" fill="#fff" stroke="#0a0a0a" strokeWidth="3" />
+            <path d="M-34 -22 a6 6 0 0 1 6 -6 h56 a6 6 0 0 1 6 6 v10 h-68 z" fill="#0a0a0a" />
+            <path d="M-13 0 L13 24 M13 0 L-13 24" stroke="#b42318" strokeWidth="5" strokeLinecap="round" />
+          </g>
         </svg>
+
         <p className="lp-scene-caption" aria-live="polite">
-          {caption}
+          <span key={beat} className="fx-rise">{BEATS[beat]?.caption}</span>
         </p>
+        <div className="lp-scene-dots" aria-hidden="true">
+          {BEATS.map((b, i) => (
+            <span key={b.caption} className={i === beat ? 'lp-on' : ''} />
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -205,26 +296,8 @@ function RideScene() {
 
 /** Phone frame with a miniature of the app home screen, revealed on scroll. */
 function AppReveal() {
-  const ref = useRef<HTMLDivElement>(null)
-  const [shown, setShown] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setShown(true)
-      return
-    }
-    const observer = new IntersectionObserver(
-      ([entry]) => entry?.isIntersecting && setShown(true),
-      { threshold: 0.35 },
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
   return (
-    <div ref={ref} className={`lp-phone-wrap ${shown ? 'lp-shown' : ''}`}>
+    <div className="lp-phone-wrap">
       <div className="lp-phone" role="img" aria-label="Preview of the RideRecord home screen: a greeting, a Log a ride button, a Talk instead button, and recent complaints with status chips.">
         <p className="lp-phone-hi">Hi, Denise</p>
         <p className="lp-phone-sub">How was today&rsquo;s ride?</p>
@@ -252,11 +325,11 @@ export default function Landing() {
     <div className="lp">
       <style>{`
         .lp {
-          --blue: #1E40AF;
-          --blue-dark: #16307f;
-          --yellow: #FACC15;
-          --ink: #101828;
-          --muted: #475467;
+          --blue: #0a0a0a;
+          --blue-dark: #404040;
+          --yellow: #ffffff;
+          --ink: #0a0a0a;
+          --muted: #525252;
           --paper: #ffffff;
           --wash: #f4f6fc;
           background: var(--paper);
@@ -264,7 +337,7 @@ export default function Landing() {
           font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
           line-height: 1.5;
         }
-        .lp h1, .lp h2, .lp h3, .lp-display { font-family: 'Space Grotesk', 'Inter', ui-sans-serif, sans-serif; }
+        .lp h1, .lp h2, .lp h3, .lp-display { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
         .lp a:focus-visible, .lp summary:focus-visible {
           outline: 3px solid var(--blue);
           outline-offset: 3px;
@@ -277,7 +350,7 @@ export default function Landing() {
           display: flex; align-items: center; justify-content: space-between;
           padding: 1rem 1.5rem; max-width: 72rem; margin: 0 auto;
         }
-        .lp-logo { display: flex; align-items: center; gap: 0.6rem; font-weight: 700; font-size: 1.125rem; color: var(--ink); text-decoration: none; }
+        .lp-logo { display: flex; align-items: center; gap: 0.6rem; font-weight: 700; font-size: 1.25rem; color: var(--ink); text-decoration: none; }
         .lp-header-cta {
           display: inline-flex; align-items: center; min-height: 48px; padding: 0 1.25rem;
           background: var(--blue); color: #fff; font-weight: 600; border-radius: 0.625rem; text-decoration: none;
@@ -285,7 +358,7 @@ export default function Landing() {
         .lp-header-cta:hover { background: var(--blue-dark); }
 
         /* Hero */
-        .lp-hero { padding: 4rem 0 2rem; text-align: center; }
+        .lp-hero { padding: 4rem 0 2rem; text-align: center; position: relative; isolation: isolate; }
         .lp-hero h1 {
           font-size: clamp(2.5rem, 6vw, 4.25rem); font-weight: 700;
           letter-spacing: -0.03em; line-height: 1.02; margin: 0;
@@ -309,9 +382,19 @@ export default function Landing() {
           display: flex; flex-direction: column; align-items: center; justify-content: center;
           padding: 2rem 1rem;
         }
-        .lp-scene-svg { width: min(100%, 52rem); height: auto; }
+        .lp-scene-svg {
+          width: min(100%, 60rem); height: auto; border-radius: 1.5rem;
+          box-shadow: 0 30px 60px -30px rgba(16,24,40,0.45);
+        }
+        .lp-scene-caption span { display: inline-block; }
+        .lp-scene-dots { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        .lp-scene-dots span {
+          width: 0.5rem; height: 0.5rem; border-radius: 999px; background: #d0d5dd;
+          transition: width var(--dur-2) var(--ease-swift), background var(--dur-2) ease;
+        }
+        .lp-scene-dots .lp-on { width: 1.75rem; background: var(--blue); }
         .lp-scene-caption {
-          margin-top: 1.5rem; font-family: 'Space Grotesk', sans-serif;
+          margin-top: 1.5rem; text-align: center; font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
           font-size: 1.375rem; font-weight: 600; color: var(--ink);
         }
 
@@ -325,10 +408,10 @@ export default function Landing() {
         .lp-reveal p { color: var(--muted); font-size: 1.125rem; margin: 0; }
         .lp-phone-wrap { display: flex; justify-content: center; }
         .lp-phone {
-          width: min(100%, 20rem); background: #fff; border: 3px solid var(--ink);
+          width: min(100%, 20rem); background: var(--frost); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 3px solid var(--ink);
           border-radius: 2rem; padding: 2rem 1.5rem; box-shadow: 0 24px 48px -20px rgba(16,24,40,0.25);
         }
-        .lp-phone-hi { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 700; margin: 0; color: var(--ink); }
+        .lp-phone-hi { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; font-size: 1.5rem; font-weight: 700; margin: 0; color: var(--ink); }
         .lp-phone-sub { color: var(--muted); margin: 0.25rem 0 1.25rem; font-size: 0.9375rem; }
         .lp-phone-btn, .lp-phone-btn2 {
           display: flex; align-items: center; justify-content: center; min-height: 52px;
@@ -357,13 +440,13 @@ export default function Landing() {
         .lp-step-icon { width: 48px; height: 48px; color: var(--blue); }
         .lp-step h3 { font-size: 1.25rem; margin: 1.25rem 0 0.5rem; }
         .lp-step p { color: var(--muted); margin: 0; }
-        .lp-step-num { font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: var(--blue); font-size: 0.875rem; letter-spacing: 0.12em; }
+        .lp-step-num { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; font-weight: 700; color: var(--blue); font-size: 0.875rem; letter-spacing: 0.12em; }
 
         .lp-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; list-style: none; padding: 0; margin: 0; }
         @media (max-width: 860px) { .lp-stats { grid-template-columns: 1fr; } }
         .lp-stat { background: var(--wash); border-radius: 1rem; padding: 2rem; }
         .lp-stat-num {
-          font-family: 'Space Grotesk', sans-serif; font-size: 3.5rem; font-weight: 700;
+          font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; font-size: 3.5rem; font-weight: 700;
           color: var(--blue); line-height: 1; letter-spacing: -0.02em;
         }
         .lp-stat p { color: var(--muted); margin: 1rem 0 0; }
@@ -401,11 +484,84 @@ export default function Landing() {
         .lp-footer a { color: var(--blue); text-decoration: none; font-weight: 600; }
         .lp-footer a:hover { text-decoration: underline; }
 
+        /* ---- Monochrome look: black on white, one typeface, big tight type ---- */
+        html { scroll-padding-bottom: 6rem; } /* keep focused things clear of the floating bar */
+        .lp > main, .lp > footer { position: relative; z-index: 1; }
+
+        /* floating bar, bottom centre */
+        .lp-pill {
+          position: fixed; left: 50%; translate: -50% 0; bottom: max(1.5rem, env(safe-area-inset-bottom)); z-index: 50;
+          display: flex; align-items: center; gap: 1.5rem; padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+          background: color-mix(in srgb, var(--ink) 86%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+          border-radius: 0.3rem; white-space: nowrap;
+        }
+        .lp-pill .lp-logo { color: #fff; }
+        .lp-pill .lp-logo > span { background: #fff; color: var(--ink); }
+        .lp-pill .lp-header-cta { background: #fff; color: var(--ink); border-radius: 0.2rem; }
+        .lp-pill .lp-header-cta:hover { background: #d4d4d4; }
+        .lp .lp-pill a:focus-visible { outline-color: #fff; }
+
+        /* hero: the headline sits in black label blocks */
+        .lp-hero { min-height: 82dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4rem 0; }
+        .lp-hero h1 { font-weight: 600; line-height: 1.1; }
+        .lp-label { display: inline-block; background: color-mix(in srgb, var(--ink) 86%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: #fff; padding: 0.08em 0.3em 0.14em; border-radius: 0.3rem; margin: 0.06em 0; }
+        .lp-hero h1 .lp-muteword { color: #a3a3a3; }
+        .lp-hero-sub { color: var(--ink); font-weight: 600; font-size: clamp(1.25rem, 2.4vw, 1.75rem); line-height: 1.15; letter-spacing: -0.02em; }
+        .lp-cta, .lp-step, .lp-stat { border-radius: 0.3rem; }
+
+        /* wide screens: the two headline blocks sit left and right, not stacked in the middle */
+        @media (min-width: 768px) {
+          .lp-hero { align-items: stretch; text-align: left; }
+          .lp-hero h1 { display: flex; flex-direction: column; }
+          .lp-hero h1 br { display: none; }
+          .lp-hero h1 > .lp-label { align-self: flex-start; }
+          .lp-hero h1 > .lp-label ~ .lp-label { align-self: flex-end; }
+          .lp-hero-sub { margin-left: 0; }
+          .lp-cta { align-self: flex-start; }
+        }
+
+        /* sections: very large headings, rows split by black rules */
+        .lp-section h2, .lp-reveal h2, .lp-band h2 { font-size: clamp(2.5rem, 7vw, 4.5rem); font-weight: 600; letter-spacing: -0.04em; line-height: 0.98; }
+        .lp-section-lead, .lp-reveal p { color: var(--ink); font-weight: 600; font-size: clamp(1.25rem, 2.4vw, 1.75rem); line-height: 1.15; letter-spacing: -0.02em; }
+        .lp-steps, .lp-stats { display: block; }
+        .lp-step, .lp-stat { background: none; border: 0; border-top: 1px solid var(--ink); border-radius: 0; padding: 1.5rem 0; }
+        .lp-step { display: grid; grid-template-columns: 7rem 1fr; column-gap: 1.5rem; align-items: start; }
+        .lp-step > div { grid-column: 1; grid-row: 1 / span 3; }
+        .lp-step > :not(div) { grid-column: 2; }
+        .lp-step h3 { margin: 0; font-size: clamp(1.75rem, 4.5vw, 3rem); font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+        .lp-step p, .lp-stat p { font-size: 1.125rem; margin-top: 0.5rem; }
+        @media (max-width: 640px) { .lp-step { grid-template-columns: 1fr; } .lp-step > * { grid-column: 1; grid-row: auto; } }
+        .lp-faq { max-width: none; }
+        .lp-faq details { border-bottom-color: var(--ink); }
+        .lp-faq summary { font-size: clamp(1.25rem, 3vw, 2rem); letter-spacing: -0.02em; }
+        .lp-reveal { background: none; }
+        .lp-chip-filed { background: #e5e5e5; }
+
+        /* closing panel: an inset black slab */
+        .lp-band { margin: 0 1.5rem 1.5rem; border-radius: 0.3rem; min-height: 80dvh; display: flex; align-items: center; text-align: left; }
+        .lp-band p { color: #d4d4d4; font-size: 1.25rem; }
+        .lp-band-cta { border-radius: 0.3rem; }
+        .lp-footer { border-top: 0; padding: 2rem 0 7rem; }
+
         /* Motion: everything animated only when motion is welcome */
         @media (prefers-reduced-motion: no-preference) {
-          .lp-phone-wrap { opacity: 0; transform: translateY(3rem); transition: opacity 600ms ease, transform 600ms ease; }
-          .lp-phone-wrap.lp-shown { opacity: 1; transform: none; }
-          .lp-cta, .lp-header-cta, .lp-band-cta { transition: background 150ms ease, filter 150ms ease; }
+          .lp-header-cta { transition: background 150ms ease; }
+          .lp-band-cta { transition: translate var(--dur-1) var(--ease-swift), box-shadow var(--dur-1) var(--ease-swift), filter var(--dur-1) ease; }
+          /* Reveal on scroll. Browsers without scroll timelines just show the content. */
+          @supports (animation-timeline: view()) {
+            .lp-phone-wrap, .lp-step, .lp-stat {
+              animation: rise linear both;
+              animation-timeline: view();
+              animation-range: entry 10% cover 30%;
+            }
+          }
+          /* FAQ opens smoothly where supported, instantly elsewhere. */
+          .lp-faq { interpolate-size: allow-keywords; }
+          .lp-faq details::details-content {
+            height: 0; overflow: clip;
+            transition: height var(--dur-2) var(--ease-swift), content-visibility var(--dur-2) allow-discrete;
+          }
+          .lp-faq details[open]::details-content { height: auto; }
         }
         @media (prefers-reduced-motion: reduce) {
           .lp-scene-track { height: auto; }
@@ -413,17 +569,10 @@ export default function Landing() {
         }
       `}</style>
 
-      <header className="lp-header">
-        <a href="#top" className="lp-logo">
-          {/* Minimal wolverine-riding-a-bus mark */}
-          <svg width="34" height="34" viewBox="0 0 48 48" aria-hidden="true">
-            <rect x="4" y="16" width="40" height="20" rx="5" fill="#101828" />
-            <rect x="9" y="21" width="9" height="7" rx="1.5" fill="#fff" />
-            <rect x="21" y="21" width="9" height="7" rx="1.5" fill="#fff" />
-            <circle cx="14" cy="38" r="4" fill="#101828" />
-            <circle cx="34" cy="38" r="4" fill="#101828" />
-            <path d="M20 14c2-5 6-7 9-6-1 2-1 4 1 5-2 1-4 1-6 0-1 1-3 2-4 1z" fill="#101828" />
-          </svg>
+      <DotField />
+      <header className="lp-pill">
+        <a href="#top" className="lp-logo lp-display">
+          <Logo />
           RideRecord
         </a>
         <a href="#app" className="lp-header-cta">
@@ -434,15 +583,17 @@ export default function Landing() {
       <main id="top">
         {/* 1. Hero + scroll-driven bus scene */}
         <section className="lp-hero lp-wrap" aria-labelledby="lp-hero-h">
-          <h1 id="lp-hero-h">
-            The appointment was at nine.
+          <h1 id="lp-hero-h" className="fx-rise">
+            <span className="lp-label">The appointment was at nine.</span>
             <br />
-            The ride <span className="lp-muteword">never came.</span>
+            <span className="lp-label">
+              The ride <span className="lp-muteword">never came.</span>
+            </span>
           </h1>
-          <p className="lp-hero-sub">
+          <p className="lp-hero-sub fx-rise" style={{ ['--i' as string]: 2 }}>
             Log it in seconds. We&rsquo;ll draft the complaint and send it to the right place.
           </p>
-          <a href="#app" className="lp-cta">
+          <a href="#app" className="lp-cta fx-rise fx-lift" style={{ ['--i' as string]: 4 }}>
             Log a ride
           </a>
         </section>
@@ -517,7 +668,7 @@ export default function Landing() {
           <div className="lp-wrap">
             <h2 id="lp-band-h">Next time the ride doesn&rsquo;t show, be ready.</h2>
             <p>Ten seconds now means a complaint that lands before the deadline.</p>
-            <a href="#app" className="lp-band-cta">
+            <a href="#app" className="lp-band-cta fx-lift">
               Log a ride
             </a>
           </div>
